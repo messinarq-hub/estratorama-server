@@ -1052,26 +1052,30 @@
       <div class="card-body">
         <div class="field">
           <label for="consistencia">Consistencia</label>
-          <select id="consistencia" onchange="refreshPreview()">
+          <select id="consistencia" onchange="clearError('consistencia'); refreshPreview();">
+            <option value="" selected disabled>— Selecciona —</option>
             <option>Suelto</option>
             <option>Friable</option>
-            <option selected>Firme</option>
+            <option>Firme</option>
             <option>Muy firme</option>
             <option>Muy friable</option>
             <option>Extremadamente firme</option>
           </select>
+          <p class="field-error" id="err-consistencia"></p>
         </div>
 
         <div class="grid2" style="margin-top:14px;">
           <div class="field">
             <label for="granuloDom">Granulometría dominante</label>
-            <select id="granuloDom" onchange="refreshPreview()">
+            <select id="granuloDom" onchange="clearError('granuloDom'); refreshPreview();">
+              <option value="" selected disabled>— Selecciona —</option>
               <option>Menos 0,05 mm (limo y arcilla)</option>
               <option>0,05 a 0,5 mm (arena fina)</option>
               <option>0,5 a 2,0 mm (arena gruesa)</option>
               <option>2,0 a 10,0 mm (gravilla)</option>
               <option>Sobre 10 mm (grava y piedras)</option>
             </select>
+            <p class="field-error" id="err-granuloDom"></p>
           </div>
           <div class="field">
             <label for="granuloSec">Granulometría secundaria <span style="font-weight:400; color:var(--ink-soft);">(opcional)</span></label>
@@ -1089,12 +1093,14 @@
         <div class="grid2" style="margin-top:14px;">
           <div class="field">
             <label for="colorPrincipal">Color principal</label>
-            <select id="colorPrincipal" onchange="refreshPreview()">
+            <select id="colorPrincipal" onchange="clearError('colorPrincipal'); refreshPreview();">
+              <option value="" selected disabled>— Selecciona —</option>
               <option>pardo oscuro</option><option>pardo medio</option><option>pardo claro</option>
               <option>gris oscuro</option><option>gris claro</option><option>negro</option>
               <option>pardo anaranjado</option><option>pardo amarillento claro</option>
               <option>pardo grisáceo</option><option>blanquecino</option>
             </select>
+            <p class="field-error" id="err-colorPrincipal"></p>
           </div>
           <div class="field">
             <label for="colorSecundario">Color secundario <span style="font-weight:400; color:var(--ink-soft);">(opcional)</span></label>
@@ -1112,7 +1118,7 @@
           <div class="chip-group" id="inclusiones">
             <span class="chip" onclick="toggleChip(this)">Carbón</span>
             <span class="chip" onclick="toggleChip(this)">Conchas</span>
-            <span class="chip on" onclick="toggleChip(this)">Subactual</span>
+            <span class="chip" onclick="toggleChip(this)">Subactual</span>
             <span class="chip" onclick="toggleChip(this, onOtrosToggle)">Otros</span>
           </div>
           <div id="otrosDescBox" style="display:none; margin-top:10px;">
@@ -1123,7 +1129,8 @@
 
         <div class="field" style="margin-top:14px;">
           <label for="obsEstrat">Observaciones de estratigrafía</label>
-          <textarea id="obsEstrat" oninput="refreshPreview()">Matriz limo arcillosa con presencia de abundante basura subactual. Las inclusiones rocosas son de guijarros redondeados.</textarea>
+          <textarea id="obsEstrat" placeholder="Describe la matriz: tipo de sedimento, humedad, presencia de raicillas, etc." oninput="clearError('obsEstrat'); refreshPreview();"></textarea>
+          <p class="field-error" id="err-obsEstrat"></p>
         </div>
       </div>
     </div>
@@ -1930,6 +1937,10 @@
     clearError('readSitio');
     clearError('responsable');
     clearError('otrosDesc');
+    clearError('consistencia');
+    clearError('granuloDom');
+    clearError('colorPrincipal');
+    clearError('obsEstrat');
 
     const proyecto = document.getElementById('proyecto').value.trim();
     if(!proyecto){
@@ -1946,6 +1957,23 @@
     const responsable = document.getElementById('responsable').value.trim();
     if(!responsable){
       showError('responsable', 'Falta indicar quién registra este nivel.');
+      ok = false;
+    }
+
+    if(!document.getElementById('consistencia').value){
+      showError('consistencia', 'Elige la consistencia del nivel.');
+      ok = false;
+    }
+    if(!document.getElementById('granuloDom').value){
+      showError('granuloDom', 'Elige la granulometría dominante.');
+      ok = false;
+    }
+    if(!document.getElementById('colorPrincipal').value){
+      showError('colorPrincipal', 'Elige el color principal.');
+      ok = false;
+    }
+    if(!document.getElementById('obsEstrat').value.trim()){
+      showError('obsEstrat', 'Describe la matriz de este nivel.');
       ok = false;
     }
 
