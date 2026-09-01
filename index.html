@@ -925,7 +925,10 @@
 
       <div class="field-mini">
         <label for="proyecto">Proyecto</label>
-        <input type="text" id="proyecto" value="Registro Arqueológico Valle del Itata" oninput="refreshPreview()" onblur="normalizeProyecto()">
+        <input type="text" id="proyecto" value="" placeholder="nombre_del_proyecto"
+          oninput="this.value=this.value.toLowerCase(); clearError('proyecto'); refreshPreview();"
+          onblur="normalizeProyecto()">
+        <p class="field-error" id="err-proyecto"></p>
       </div>
 
       <div class="field-mini">
@@ -935,7 +938,10 @@
 
       <div class="field-mini">
         <label for="readSitio">Sitio <span style="font-weight:400;">(sugerido si se conoce, editable)</span></label>
-        <input type="text" id="readSitio" value="Lota" placeholder="Escribe el sitio de esta unidad" oninput="refreshPreview()" onblur="normalizeSitio()">
+        <input type="text" id="readSitio" value="" placeholder="nombre_del_sitio"
+          oninput="this.value=this.value.toLowerCase(); clearError('readSitio'); refreshPreview();"
+          onblur="normalizeSitio()">
+        <p class="field-error" id="err-readSitio"></p>
       </div>
 
       <div class="field-mini">
@@ -1260,7 +1266,7 @@
 
   function normalizeProyecto(){
     const el = document.getElementById('proyecto');
-    el.value = el.value.trim().replace(/\s+/g, ' ');
+    el.value = normalizeUsername(el.value);
     refreshPreview();
   }
 
@@ -1454,7 +1460,7 @@
 
   function normalizeSitio(){
     const el = document.getElementById('readSitio');
-    el.value = el.value.trim().replace(/\s+/g, ' ');
+    el.value = normalizeUsername(el.value);
     refreshPreview();
   }
 
@@ -1820,8 +1826,22 @@
 
   function validateForm(){
     let ok = true;
+    clearError('proyecto');
+    clearError('readSitio');
     clearError('responsable');
     clearError('otrosDesc');
+
+    const proyecto = document.getElementById('proyecto').value.trim();
+    if(!proyecto){
+      showError('proyecto', 'Falta el nombre del proyecto.');
+      ok = false;
+    }
+
+    const sitio = document.getElementById('readSitio').value.trim();
+    if(!sitio){
+      showError('readSitio', 'Falta el nombre del sitio.');
+      ok = false;
+    }
 
     const responsable = document.getElementById('responsable').value.trim();
     if(!responsable){
