@@ -1175,6 +1175,7 @@
           <p class="note" style="margin-bottom:10px;">IDMaterial e IDRegistro se generan solos por cada material — no se muestran aquí para no saturar la pantalla, pero puedes verlos en "ver JSON" arriba.</p>
           <div id="materialRows"></div>
           <button class="add-link" onclick="addMaterialRow()">+ Agregar material</button>
+          <p class="field-error" id="err-materiales"></p>
         </div>
       </div>
     </div>
@@ -1659,19 +1660,20 @@
     row.className = 'material-row';
     row.id = id;
     const tipos = ['Líticos','Cerámica indígena','Cerámica colonial','Osteofauna','Loza','Vidrio','Metal','Carbón','Muestras','Otros'];
-    const tipoSel = prefill ? prefill.tipo : 'Loza';
-    const freqVal = prefill ? prefill.frecuencia : 1;
+    const tipoSel = prefill ? prefill.tipo : '';
+    const freqVal = prefill ? prefill.frecuencia : 0;
     const descVal = prefill ? prefill.descripcion : '';
     row.innerHTML = `
       <div class="field">
         <label>Tipo de material</label>
         <select oninput="refreshPreview()" onchange="refreshPreview()">
+          <option value="" ${tipoSel === '' ? 'selected' : ''} disabled>— Selecciona —</option>
           ${tipos.map(t => `<option${t === tipoSel ? ' selected' : ''}>${t}</option>`).join('')}
         </select>
       </div>
       <div class="field">
         <label>Frecuencia</label>
-        <input type="number" value="${freqVal}" min="1" oninput="refreshPreview()">
+        <input type="number" value="${freqVal}" min="0" oninput="refreshPreview()">
       </div>
       <div class="field">
         <label>Descripción</label>
@@ -1982,6 +1984,19 @@
     if(otrosOn && !otrosDesc){
       showError('otrosDesc', 'Describe qué tipo de inclusión es "Otros".');
       ok = false;
+    }
+
+    clearError('materiales');
+    if(document.getElementById('hayMateriales').classList.contains('on')){
+      const filas = Array.from(document.querySelectorAll('.material-row'));
+      const incompleta = filas.some(row => {
+        const [sel, freq] = row.querySelectorAll('select, input');
+        return !sel.value || Number(freq.value) <= 0;
+      });
+      if(filas.length === 0 || incompleta){
+        showError('materiales', 'Cada material necesita un Tipo elegido y una Frecuencia mayor a 0.');
+        ok = false;
+      }
     }
 
     return ok;
