@@ -5,6 +5,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const unidadesRoutes = require('./routes/unidades');
 const nivelesRoutes = require('./routes/niveles');
+const exportRoutes = require('./routes/export');
 
 const app = express();
 app.use(cors());
@@ -16,6 +17,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/auth', authRoutes);
 app.use('/unidades', unidadesRoutes);
 app.use('/niveles', nivelesRoutes);
+app.use('/export', exportRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
