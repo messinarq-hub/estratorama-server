@@ -1074,6 +1074,7 @@
               <option>0,5 a 2,0 mm (arena gruesa)</option>
               <option>2,0 a 10,0 mm (gravilla)</option>
               <option>Sobre 10 mm (grava y piedras)</option>
+              <option>Arena y gravilla</option>
             </select>
             <p class="field-error" id="err-granuloDom"></p>
           </div>
@@ -1086,8 +1087,21 @@
               <option>0,5 a 2,0 mm (arena gruesa)</option>
               <option>2,0 a 10,0 mm (gravilla)</option>
               <option>Sobre 10 mm (grava y piedras)</option>
+              <option>Arena y gravilla</option>
             </select>
           </div>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label for="formaClastos">Forma de los clastos <span style="font-weight:400; color:var(--ink-soft);">(opcional)</span></label>
+          <select id="formaClastos" onchange="refreshPreview()">
+            <option value="">— sin especificar —</option>
+            <option>Anguloso</option>
+            <option>Subanguloso</option>
+            <option>Subanguloso a redondeado</option>
+            <option>Subredondeado</option>
+            <option>Redondeado</option>
+          </select>
         </div>
 
         <div class="grid2" style="margin-top:14px;">
@@ -1119,6 +1133,7 @@
             <span class="chip" onclick="toggleChip(this)">Carbón</span>
             <span class="chip" onclick="toggleChip(this)">Conchas</span>
             <span class="chip" onclick="toggleChip(this)">Subactual</span>
+            <span class="chip" onclick="toggleChip(this)">Clastos</span>
             <span class="chip" onclick="toggleChip(this, onOtrosToggle)">Otros</span>
           </div>
           <div id="otrosDescBox" style="display:none; margin-top:10px;">
@@ -1240,7 +1255,6 @@
     </div>
 
     <div class="actions">
-      <button class="btn" onclick="showToast('Nivel guardado como borrador (simulado)')">Guardar borrador</button>
       <button class="btn primary" onclick="onGuardar()" id="btnGuardar">Guardar nivel</button>
     </div>
 
@@ -1304,9 +1318,10 @@
       <div class="card-head"><h2>2. Estratigrafía</h2></div>
       <div class="card-body">
         <p class="help-p"><strong>Consistencia</strong>: qué tan compacto está el sedimento (Suelto, Friable, Firme, Muy firme, Muy friable, Extremadamente firme).</p>
-        <p class="help-p"><strong>Granulometría dominante/secundaria</strong>: tamaño de grano predominante en la matriz. La secundaria es opcional — solo si hay una mezcla clara de dos tamaños.</p>
+        <p class="help-p"><strong>Granulometría dominante/secundaria</strong>: tamaño de grano predominante en la matriz. La secundaria es opcional — solo si hay una mezcla clara de dos tamaños. Incluye la opción "Arena y gravilla" para cuando ambas aparecen mezcladas en proporciones similares.</p>
+        <p class="help-p"><strong>Forma de los clastos</strong> (opcional): angulosidad de las piedras/gravas presentes (Anguloso, Subanguloso, Subredondeado, Redondeado, o la transición "Subanguloso a redondeado").</p>
         <p class="help-p"><strong>Color principal/secundario</strong>: color de la matriz. El secundario es opcional, para vetas o manchones distintos al color base.</p>
-        <p class="help-p"><strong>Inclusiones</strong>: selecciona todas las que apliquen (Carbón, Conchas, Subactual, Otros). Si eliges <strong>"Otros"</strong>, es obligatorio describir qué es en el campo que aparece debajo — si no, la ficha no te va a dejar guardar.</p>
+        <p class="help-p"><strong>Inclusiones</strong>: selecciona todas las que apliquen (Carbón, Conchas, Subactual, Clastos, Otros). Si eliges <strong>"Otros"</strong>, es obligatorio describir qué es en el campo que aparece debajo — si no, la ficha no te va a dejar guardar.</p>
         <p class="help-p"><strong>Observaciones de estratigrafía</strong>: descripción libre de la matriz — este texto es el que después se usa para redactar el informe final, así que mientras más detallado, mejor.</p>
       </div>
     </div>
@@ -1739,6 +1754,7 @@
       Consistencia: document.getElementById('consistencia').value,
       GranuloDominante: document.getElementById('granuloDom').value,
       GranuloSecundario: document.getElementById('granuloSec').value || null,
+      FormaClastos: document.getElementById('formaClastos').value || null,
       ColorPrincipal: document.getElementById('colorPrincipal').value,
       ColorSecundario: document.getElementById('colorSecundario').value || null,
       Inclusiones: inclusiones,
@@ -1806,6 +1822,7 @@
       consistencia: document.getElementById('consistencia').value,
       granuloDom: document.getElementById('granuloDom').value,
       granuloSec: document.getElementById('granuloSec').value,
+      formaClastos: document.getElementById('formaClastos').value,
       colorPrincipal: document.getElementById('colorPrincipal').value,
       colorSecundario: document.getElementById('colorSecundario').value,
       inclusiones: getChips('inclusiones'),
@@ -1845,6 +1862,7 @@
     document.getElementById('consistencia').value = s.consistencia;
     document.getElementById('granuloDom').value = s.granuloDom;
     document.getElementById('granuloSec').value = s.granuloSec || '';
+    document.getElementById('formaClastos').value = s.formaClastos || '';
     document.getElementById('colorPrincipal').value = s.colorPrincipal;
     document.getElementById('colorSecundario').value = s.colorSecundario || '';
 
@@ -2017,6 +2035,7 @@
       consistencia: snap.consistencia,
       granuloDominante: snap.granuloDom,
       granuloSecundario: snap.granuloSec || null,
+      formaClastos: snap.formaClastos || null,
       colorPrincipal: snap.colorPrincipal,
       colorSecundario: snap.colorSecundario || null,
       inclusiones: snap.inclusiones,
@@ -2051,6 +2070,7 @@
       consistencia: row.consistencia,
       granuloDom: row.granulo_dominante,
       granuloSec: row.granulo_secundario,
+      formaClastos: row.forma_clastos,
       colorPrincipal: row.color_principal,
       colorSecundario: row.color_secundario,
       inclusiones: row.inclusiones || [],
@@ -2224,6 +2244,7 @@
     ['unidad','Unidad'], ['estrato','Estrato'], ['nivel','Nivel'],
     ['profundidad_inicio_cm','Prof. inicio'], ['profundidad_fin_cm','Prof. fin'],
     ['consistencia','Consistencia'], ['granulo_dominante','Granulo dominante'],
+    ['forma_clastos','Forma clastos'],
     ['color_principal','Color'], ['inclusiones','Inclusiones'],
     ['hay_materiales','Hay materiales'], ['estado_nivel','Estado'],
     ['responsable','Responsable'], ['creado_en','Creado'],
