@@ -35,6 +35,7 @@ function toCsv(rows, columns) {
 }
 
 const NIVELES_COLS = [
+  ['id', 'ID'],
   ['unidad', 'Unidad'], ['estrato', 'Estrato'], ['nivel', 'Nivel'],
   ['profundidad_inicio_cm', 'Prof_Inicio'], ['profundidad_fin_cm', 'Prof_Fin'],
   ['consistencia', 'Consistencia'], ['granulo_dominante', 'Granulo_Dominante'],
@@ -44,6 +45,7 @@ const NIVELES_COLS = [
 ];
 
 const MATERIALES_COLS = [
+  ['id', 'ID_Material'], ['id_registro', 'ID_Registro'],
   ['unidad', 'Unidad'], ['nivel', 'Nivel'], ['estrato', 'Estrato'],
   ['tipo_material', 'Tipo'], ['frecuencia', 'Frecuencia'], ['descripcion', 'Descripcion'],
   ['responsable', 'Responsable'], ['creado_en', 'Creado_En'],
