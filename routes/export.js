@@ -20,6 +20,11 @@ function toCsv(rows, columns) {
     let s;
     if (v instanceof Date) s = v.toISOString().replace('T', ' ').slice(0, 19);
     else if (Array.isArray(v)) s = v.join(', ');
+    else if (typeof v === 'string' && /^\{.*\}$/.test(v)) {
+      // Postgres devuelve los arrays de enums personalizados como texto "{a,b}"
+      // en vez de un array real — lo traducimos a "a, b" legible.
+      s = v.slice(1, -1).split(',').filter(Boolean).join(', ');
+    }
     else s = String(v);
     if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
     return s;
