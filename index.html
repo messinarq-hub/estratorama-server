@@ -1010,7 +1010,7 @@
 
       <div class="field-mini">
         <label for="proyecto">Proyecto</label>
-        <input type="text" id="proyecto" value="" placeholder="nombre_del_proyecto"
+        <input type="text" id="proyecto" value="proyecto_piscicultura_chayahue_ras_11a" placeholder="nombre_del_proyecto"
           oninput="this.value=this.value.toLowerCase().replace(/ /g,'_'); clearError('proyecto'); refreshPreview();"
           onblur="normalizeProyecto()">
         <p class="field-error" id="err-proyecto"></p>
@@ -1023,7 +1023,7 @@
 
       <div class="field-mini">
         <label for="readSitio">Sitio</label>
-        <input type="text" id="readSitio" value="" placeholder="nombre_del_sitio" list="sitiosConocidos"
+        <input type="text" id="readSitio" value="chayahue-3" placeholder="nombre_del_sitio" list="sitiosConocidos"
           oninput="this.value=this.value.toLowerCase().replace(/ /g,'_'); clearError('readSitio'); refreshPreview();"
           onblur="normalizeSitio()">
         <datalist id="sitiosConocidos"></datalist>
@@ -1156,6 +1156,19 @@
         </div>
 
         <div class="field" style="margin-top:14px;">
+          <label for="granuloTerc">Granulometría terciaria <span style="font-weight:400; color:var(--ink-soft);">(opcional)</span></label>
+          <select id="granuloTerc" onchange="refreshPreview()">
+            <option value="">— sin especificar —</option>
+            <option>Menos 0,05 mm (limo y arcilla)</option>
+            <option>0,05 a 0,5 mm (arena fina)</option>
+            <option>0,5 a 2,0 mm (arena gruesa)</option>
+            <option>2,0 a 10,0 mm (gravilla)</option>
+            <option>Sobre 10 mm (grava y piedras)</option>
+            <option>Arena y gravilla</option>
+          </select>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
           <label for="formaClastos">Forma de los clastos <span style="font-weight:400; color:var(--ink-soft);">(opcional)</span></label>
           <select id="formaClastos" onchange="refreshPreview()">
             <option value="">— sin especificar —</option>
@@ -1191,13 +1204,14 @@
         </div>
 
         <div class="field" style="margin-top:14px;">
-          <label>Inclusiones</label>
+          <label>Otros elementos</label>
           <div class="chip-group" id="inclusiones">
-            <span class="chip" onclick="toggleChip(this)">Carbón</span>
+            <span class="chip" onclick="toggleChip(this)">Orgánico</span>
             <span class="chip" onclick="toggleChip(this)">Conchas</span>
             <span class="chip" onclick="toggleChip(this)">Subactual</span>
             <span class="chip" onclick="toggleChip(this)">Clastos</span>
-            <span class="chip" onclick="toggleChip(this, onOtrosToggle)">Otros</span>
+            <span class="chip" onclick="toggleChip(this)">Carbón</span>
+            <span class="chip" data-value="Otros" onclick="toggleChip(this, onOtrosToggle)">Otras inclusiones (describir)</span>
           </div>
           <div id="otrosDescBox" style="display:none; margin-top:10px;">
             <input type="text" id="otrosDesc" placeholder="Describe la inclusión..." oninput="clearError('otrosDesc'); refreshPreview();">
@@ -1364,7 +1378,7 @@
       <div class="card-head"><h2>Antes de empezar</h2></div>
       <div class="card-body">
         <p class="help-p"><strong>Proyecto</strong> y <strong>Sitio</strong> son obligatorios en cada nivel. Se escriben solos en minúscula y con guion bajo en vez de espacios (ej. <code>extension_linea_2</code>) — no hace falta que te preocupes del formato, la ficha lo corrige mientras escribes.</p>
-        <p class="help-p"><strong>Unidad</strong> se elige de una lista de U1 a U100. Si ya trabajaste antes en esa unidad, sus <strong>Dimensiones</strong> se autocompletan solas.</p>
+        <p class="help-p"><strong>Unidad</strong> se elige de una lista de R1 a R10. Si ya trabajaste antes en esa unidad, sus <strong>Dimensiones</strong> se autocompletan solas.</p>
       </div>
     </div>
 
@@ -1381,10 +1395,10 @@
       <div class="card-head"><h2>2. Estratigrafía</h2></div>
       <div class="card-body">
         <p class="help-p"><strong>Consistencia</strong>: qué tan compacto está el sedimento (Suelto, Friable, Firme, Muy firme, Muy friable, Extremadamente firme).</p>
-        <p class="help-p"><strong>Granulometría dominante/secundaria</strong>: tamaño de grano predominante en la matriz. La secundaria es opcional — solo si hay una mezcla clara de dos tamaños. Incluye la opción "Arena y gravilla" para cuando ambas aparecen mezcladas en proporciones similares.</p>
+        <p class="help-p"><strong>Granulometría dominante/secundaria/terciaria</strong>: tamaño de grano predominante en la matriz. La secundaria y la terciaria son opcionales — solo si hay una mezcla de dos o tres tamaños distintos presentes. Incluye la opción "Arena y gravilla" para cuando dos tamaños aparecen mezclados en proporciones similares.</p>
         <p class="help-p"><strong>Forma de los clastos</strong> (opcional): angulosidad de las piedras/gravas presentes (Anguloso, Subanguloso, Subredondeado, Redondeado, o la transición "Subanguloso a redondeado").</p>
         <p class="help-p"><strong>Color principal/secundario</strong>: color de la matriz. El secundario es opcional, para vetas o manchones distintos al color base.</p>
-        <p class="help-p"><strong>Inclusiones</strong>: selecciona todas las que apliquen (Carbón, Conchas, Subactual, Clastos, Otros). Si eliges <strong>"Otros"</strong>, es obligatorio describir qué es en el campo que aparece debajo — si no, la ficha no te va a dejar guardar.</p>
+        <p class="help-p"><strong>Otros elementos</strong>: selecciona todos los que apliquen (Orgánico, Conchas, Subactual, Clastos, Carbón). Si eliges <strong>"Otras inclusiones (describir)"</strong>, es obligatorio describir qué es en el campo que aparece debajo — si no, la ficha no te va a dejar guardar.</p>
         <p class="help-p"><strong>Observaciones de estratigrafía</strong>: descripción libre de la matriz — este texto es el que después se usa para redactar el informe final, así que mientras más detallado, mejor.</p>
       </div>
     </div>
@@ -1440,12 +1454,7 @@
 </div>
 
 <script>
-  const UNIDADES = {
-    U43: {sitio:'Lota', sector:'Andén'},
-    U6E: {sitio:'Coronel Sur', sector:'Andén'},
-    U21: {sitio:'Chiflón', sector:'Andén'},
-    U33: {sitio:'Cousiño', sector:'Paradero'},
-  };
+  const UNIDADES = {}; // ya no se usan unidades de ejemplo; la info real viene del servidor (unidadesInfo)
   let materialCount = 0;
   let savedFichas = [];   // { localId, unidad, nivel, estrato, profundidad, snapshot }
   let editingLocalId = null;
@@ -1462,6 +1471,7 @@
       .trim()
       .toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\./g, '')
       .replace(/\s+/g, '_');
   }
 
@@ -1693,8 +1703,8 @@
 
   function initSelects(){
     // Unidad: U1–U100
-    const unidades = Array.from({length:100}, (_, i) => `U${i + 1}`);
-    populateSelect('unidad', unidades, 'U43');
+    const unidades = Array.from({length:10}, (_, i) => `R${i + 1}`);
+    populateSelect('unidad', unidades, 'R1');
 
     // Estrato: A–Z
     const letras = Array.from({length:26}, (_, i) => String.fromCharCode(65 + i));
@@ -1780,7 +1790,7 @@
   }
 
   function getChips(containerId){
-    return Array.from(document.querySelectorAll('#' + containerId + ' .chip.on')).map(c => c.textContent);
+    return Array.from(document.querySelectorAll('#' + containerId + ' .chip.on')).map(c => c.dataset.value || c.textContent);
   }
 
   function buildRecord(){
@@ -1822,6 +1832,7 @@
       Consistencia: document.getElementById('consistencia').value,
       GranuloDominante: document.getElementById('granuloDom').value,
       GranuloSecundario: document.getElementById('granuloSec').value || null,
+      GranuloTerciario: document.getElementById('granuloTerc').value || null,
       FormaClastos: document.getElementById('formaClastos').value || null,
       ColorPrincipal: document.getElementById('colorPrincipal').value,
       ColorSecundario: document.getElementById('colorSecundario').value || null,
@@ -1890,6 +1901,7 @@
       consistencia: document.getElementById('consistencia').value,
       granuloDom: document.getElementById('granuloDom').value,
       granuloSec: document.getElementById('granuloSec').value,
+      granuloTerc: document.getElementById('granuloTerc').value,
       formaClastos: document.getElementById('formaClastos').value,
       colorPrincipal: document.getElementById('colorPrincipal').value,
       colorSecundario: document.getElementById('colorSecundario').value,
@@ -1930,12 +1942,14 @@
     document.getElementById('consistencia').value = s.consistencia;
     document.getElementById('granuloDom').value = s.granuloDom;
     document.getElementById('granuloSec').value = s.granuloSec || '';
+    document.getElementById('granuloTerc').value = s.granuloTerc || '';
     document.getElementById('formaClastos').value = s.formaClastos || '';
     document.getElementById('colorPrincipal').value = s.colorPrincipal;
     document.getElementById('colorSecundario').value = s.colorSecundario || '';
 
     document.querySelectorAll('#inclusiones .chip').forEach(c => {
-      c.classList.toggle('on', s.inclusiones.some(v => v === c.textContent || v.startsWith('Otros:') && c.textContent === 'Otros'));
+      const val = c.dataset.value || c.textContent;
+      c.classList.toggle('on', s.inclusiones.some(v => v === val || (v.startsWith('Otros:') && val === 'Otros')));
     });
     document.getElementById('otrosDesc').value = s.otrosDesc || '';
     onOtrosToggle();
@@ -2261,6 +2275,7 @@
       consistencia: snap.consistencia,
       granuloDominante: snap.granuloDom,
       granuloSecundario: snap.granuloSec || null,
+      granuloTerciario: snap.granuloTerc || null,
       formaClastos: snap.formaClastos || null,
       colorPrincipal: snap.colorPrincipal,
       colorSecundario: snap.colorSecundario || null,
@@ -2296,6 +2311,7 @@
       consistencia: row.consistencia,
       granuloDom: row.granulo_dominante,
       granuloSec: row.granulo_secundario,
+      granuloTerc: row.granulo_terciario,
       formaClastos: row.forma_clastos,
       colorPrincipal: row.color_principal,
       colorSecundario: row.color_secundario,
@@ -2553,8 +2569,9 @@
     ['unidad','Unidad'], ['estrato','Estrato'], ['nivel','Nivel'],
     ['profundidad_inicio_cm','Prof. inicio'], ['profundidad_fin_cm','Prof. fin'],
     ['consistencia','Consistencia'], ['granulo_dominante','Granulo dominante'],
+    ['granulo_secundario','Granulo secundario'], ['granulo_terciario','Granulo terciario'],
     ['forma_clastos','Forma clastos'],
-    ['color_principal','Color'], ['inclusiones','Inclusiones'],
+    ['color_principal','Color'], ['inclusiones','Otros elementos'],
     ['hay_materiales','Hay materiales'], ['estado_nivel','Estado'],
     ['responsable','Responsable'], ['creado_en','Creado'],
   ];
