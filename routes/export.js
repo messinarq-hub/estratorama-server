@@ -39,7 +39,8 @@ const NIVELES_COLS = [
   ['unidad', 'Unidad'], ['estrato', 'Estrato'], ['nivel', 'Nivel'],
   ['profundidad_inicio_cm', 'Prof_Inicio'], ['profundidad_fin_cm', 'Prof_Fin'],
   ['consistencia', 'Consistencia'], ['granulo_dominante', 'Granulo_Dominante'],
-  ['forma_clastos', 'Forma_Clastos'], ['color_principal', 'Color'], ['inclusiones', 'Inclusiones'],
+  ['granulo_secundario', 'Granulo_Secundario'], ['granulo_terciario', 'Granulo_Terciario'],
+  ['forma_clastos', 'Forma_Clastos'], ['color_principal', 'Color'], ['inclusiones', 'Otros_Elementos'],
   ['hay_materiales', 'Hay_Materiales'], ['estado_nivel', 'Estado'],
   ['responsable', 'Responsable'], ['creado_en', 'Creado_En'],
 ];
