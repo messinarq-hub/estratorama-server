@@ -69,16 +69,16 @@ router.post('/', async (req, res) => {
     const nivelResult = await client.query(
       `INSERT INTO niveles (
         unidad, estrato, nivel, profundidad_inicio_cm, profundidad_fin_cm, prof_otro,
-        control_estratigrafico, consistencia, granulo_dominante, granulo_secundario, forma_clastos,
+        control_estratigrafico, consistencia, granulo_dominante, granulo_secundario, granulo_terciario, forma_clastos,
         color_principal, color_secundario, inclusiones, otros_desc, observaciones,
         id_rasgo, tipo_rasgo, descripcion_rasgo, hay_materiales, foto_perfil, foto_planta,
         estado_nivel, perfil_dibujado, observaciones_perfil, responsable
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27
       ) RETURNING *`,
       [
         b.unidad, b.estrato, b.nivel, b.profundidadInicio, b.profundidadFin, b.profOtro || null,
-        !!b.controlEstratigrafico, b.consistencia, b.granuloDominante, b.granuloSecundario || null, b.formaClastos || null,
+        !!b.controlEstratigrafico, b.consistencia, b.granuloDominante, b.granuloSecundario || null, b.granuloTerciario || null, b.formaClastos || null,
         b.colorPrincipal, b.colorSecundario || null, b.inclusiones || [], b.otrosDesc || null, b.observaciones,
         b.idRasgo || null, b.tipoRasgo || null, b.descripcionRasgo || null,
         !!b.hayMateriales, !!b.fotoPerfil, !!b.fotoPlanta,
@@ -119,15 +119,15 @@ router.put('/:id', async (req, res) => {
   const result = await pool.query(
     `UPDATE niveles SET
       estrato=$1, profundidad_inicio_cm=$2, profundidad_fin_cm=$3, prof_otro=$4,
-      control_estratigrafico=$5, consistencia=$6, granulo_dominante=$7, granulo_secundario=$8, forma_clastos=$9,
-      color_principal=$10, color_secundario=$11, inclusiones=$12, otros_desc=$13, observaciones=$14,
-      id_rasgo=$15, tipo_rasgo=$16, descripcion_rasgo=$17, hay_materiales=$18,
-      foto_perfil=$19, foto_planta=$20, estado_nivel=$21, perfil_dibujado=$22, observaciones_perfil=$23
-     WHERE id = $24
+      control_estratigrafico=$5, consistencia=$6, granulo_dominante=$7, granulo_secundario=$8, granulo_terciario=$9, forma_clastos=$10,
+      color_principal=$11, color_secundario=$12, inclusiones=$13, otros_desc=$14, observaciones=$15,
+      id_rasgo=$16, tipo_rasgo=$17, descripcion_rasgo=$18, hay_materiales=$19,
+      foto_perfil=$20, foto_planta=$21, estado_nivel=$22, perfil_dibujado=$23, observaciones_perfil=$24
+     WHERE id = $25
      RETURNING *`,
     [
       b.estrato, b.profundidadInicio, b.profundidadFin, b.profOtro || null,
-      !!b.controlEstratigrafico, b.consistencia, b.granuloDominante, b.granuloSecundario || null, b.formaClastos || null,
+      !!b.controlEstratigrafico, b.consistencia, b.granuloDominante, b.granuloSecundario || null, b.granuloTerciario || null, b.formaClastos || null,
       b.colorPrincipal, b.colorSecundario || null, b.inclusiones || [], b.otrosDesc || null, b.observaciones,
       b.idRasgo || null, b.tipoRasgo || null, b.descripcionRasgo || null, !!b.hayMateriales,
       !!b.fotoPerfil, !!b.fotoPlanta, b.estadoNivel, b.perfilDibujado || [], b.observacionesPerfil || null,
