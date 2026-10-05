@@ -15,7 +15,16 @@ CREATE TYPE granulometria_t AS ENUM (
   '0,05 a 0,5 mm (arena fina)',
   '0,5 a 2,0 mm (arena gruesa)',
   '2,0 a 10,0 mm (gravilla)',
-  'Sobre 10 mm (grava y piedras)'
+  'Sobre 10 mm (grava y piedras)',
+  'Arena y gravilla'
+);
+
+CREATE TYPE forma_clasto_t AS ENUM (
+  'Anguloso',
+  'Subanguloso',
+  'Subanguloso a redondeado',
+  'Subredondeado',
+  'Redondeado'
 );
 
 CREATE TYPE estado_nivel_t AS ENUM (
@@ -28,7 +37,7 @@ CREATE TYPE tipo_material_t AS ENUM (
 );
 
 CREATE TYPE inclusion_t AS ENUM (
-  'Carbón', 'Conchas', 'Subactual', 'Otros'
+  'Orgánico', 'Conchas', 'Subactual', 'Clastos', 'Carbón', 'Otros'
 );
 
 CREATE TYPE perfil_t AS ENUM ('Norte', 'Sur', 'Este', 'Oeste');
@@ -71,6 +80,8 @@ CREATE TABLE niveles (
   consistencia            consistencia_t NOT NULL,
   granulo_dominante       granulometria_t NOT NULL,
   granulo_secundario      granulometria_t,
+  granulo_terciario       granulometria_t,
+  forma_clastos           forma_clasto_t,
   color_principal         TEXT NOT NULL,
   color_secundario        TEXT,
   inclusiones             inclusion_t[] NOT NULL DEFAULT '{}',
