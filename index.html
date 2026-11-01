@@ -932,6 +932,129 @@
     border-radius:3px;
     font-size:12.5px;
   }
+
+  /* ---------- Vista Ficha de Recolección ---------- */
+  .rec-wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 20px 60px;
+  }
+  .rec-chip-single .chip.on{
+    background:var(--accent2);
+    border-color:var(--accent2);
+    color:var(--paper);
+  }
+  .rec-subfield{
+    margin-top:10px;
+  }
+  table.mat-rec-table{
+    border-collapse:collapse;
+    width:100%;
+    font-size:12.5px;
+    min-width:860px;
+  }
+  table.mat-rec-table th{
+    text-align:left;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--ink-soft);
+    padding:6px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  table.mat-rec-table td{
+    padding:6px 8px;
+    border-bottom:1px solid var(--line-soft);
+    vertical-align:middle;
+  }
+  table.mat-rec-table td.mat-label{
+    font-weight:600;
+    white-space:nowrap;
+    color:var(--ink);
+  }
+  table.mat-rec-table input{
+    width:100%;
+    font-family:var(--sans);
+    font-size:12.5px;
+    padding:6px 7px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--paper);
+    color:var(--ink);
+  }
+  table.mat-rec-table input:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+    border-color:var(--accent);
+  }
+  table.vert-table{
+    border-collapse:collapse;
+    width:100%;
+    font-size:12.5px;
+    min-width:520px;
+  }
+  table.vert-table th{
+    text-align:left;
+    font-size:10.5px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    padding:6px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  table.vert-table td{
+    padding:6px 8px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  table.vert-table td.vert-label{
+    font-weight:700;
+    color:var(--accent);
+  }
+  table.vert-table input{
+    width:100%;
+    font-family:var(--sans);
+    font-size:12.5px;
+    padding:6px 7px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .croquis-toolbar{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .croquis-toolbar .chip{
+    border-radius:var(--radius);
+  }
+  #recCroquisCanvas{
+    display:block;
+    width:100%;
+    max-width:560px;
+    aspect-ratio:1/1;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    touch-action:none;
+    cursor:crosshair;
+    background:var(--paper);
+  }
+  .rec-list-item{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    margin-bottom:8px;
+    cursor:pointer;
+  }
+  .rec-list-item:hover{border-color:var(--accent);}
+  .rec-list-item.editing{border-color:var(--accent2); background:var(--accent2-soft);}
+  .rec-list-item.conflict{border-color:var(--rust); background:var(--rust-soft); cursor:default;}
+  .rec-li-top{display:flex; justify-content:space-between; align-items:center;}
+  .rec-li-code{font-family:var(--mono); font-size:13.5px; font-weight:700; color:var(--accent);}
+  .rec-li-meta{font-size:11.5px; color:var(--ink-soft); margin-top:3px;}
+  .rec-li-del{background:none; border:none; color:var(--ink-soft); font-size:13px; cursor:pointer; padding:2px 4px;}
+  .rec-li-del:hover{color:var(--accent);}
 </style>
 </head>
 <body>
@@ -995,6 +1118,7 @@
 
 <div class="view-nav">
   <button class="view-tab active" id="tabFicha" onclick="showView('ficha')">Ficha</button>
+  <button class="view-tab" id="tabRecoleccion" onclick="showView('recoleccion')">Ficha Recolección</button>
   <button class="view-tab" id="tabDb" onclick="showView('database')">Base de datos</button>
   <button class="view-tab" id="tabHelp" onclick="showView('instrucciones')">Instrucciones</button>
 </div>
@@ -1349,12 +1473,346 @@
 </div>
 </div>
 
+<!-- VISTA: FICHA DE RECOLECCIÓN -->
+<div id="viewRecoleccion" style="display:none;">
+  <div class="rec-wrap">
+
+    <div class="editing-banner" id="recEditingBanner">
+      <span id="recEditingBannerText">Editando ficha de recolección</span>
+      <button onclick="cancelRecEdit()">Cancelar edición</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Datos del proyecto</h2><span class="hint">Fijos — se repiten automáticamente en todas las fichas de recolección</span></div>
+      <div class="card-body">
+        <div class="grid2">
+          <div class="field">
+            <label>Proyecto</label>
+            <div class="readout" id="recProyectoReadout"></div>
+          </div>
+          <div class="field">
+            <label>Sitio</label>
+            <div class="readout" id="recSitioReadout"></div>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:14px;">
+          <div class="field">
+            <label>Permiso CMN</label>
+            <div class="readout" id="recPermisoCmnReadout"></div>
+          </div>
+          <div class="field">
+            <label>Arqueóloga/o titular</label>
+            <div class="readout" id="recArqueologoTitularReadout"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>A. Identificación y georreferenciación</h2><span class="hint">Una ficha por unidad de recolección</span></div>
+      <div class="card-body">
+        <div class="grid3">
+          <div class="field">
+            <label for="recCodigoUnidad">Código unidad</label>
+            <input type="text" id="recCodigoUnidad" placeholder="ej. recoleccion_1" list="codigosRecoleccionConocidos"
+              oninput="this.value=this.value.toLowerCase().replace(/ /g,'_'); clearError('recCodigoUnidad');" onblur="normalizeRecField('recCodigoUnidad')">
+            <datalist id="codigosRecoleccionConocidos"></datalist>
+            <p class="field-error" id="err-recCodigoUnidad"></p>
+          </div>
+          <div class="field">
+            <label for="recFecha">Fecha</label>
+            <input type="date" id="recFecha" onchange="clearError('recFecha')">
+            <p class="field-error" id="err-recFecha"></p>
+          </div>
+          <div class="field">
+            <label>Dimensiones (máx. 4 × 4 m)</label>
+            <div style="display:flex; gap:8px;">
+              <select id="recDimLargo">
+                <option value="">largo</option>
+                <option value="0.5">0,5 m</option>
+                <option value="1">1 m</option>
+                <option value="1.5">1,5 m</option>
+                <option value="2">2 m</option>
+                <option value="2.5">2,5 m</option>
+                <option value="3">3 m</option>
+                <option value="3.5">3,5 m</option>
+                <option value="4">4 m</option>
+              </select>
+              <select id="recDimAncho">
+                <option value="">ancho</option>
+                <option value="0.5">0,5 m</option>
+                <option value="1">1 m</option>
+                <option value="1.5">1,5 m</option>
+                <option value="2">2 m</option>
+                <option value="2.5">2,5 m</option>
+                <option value="3">3 m</option>
+                <option value="3.5">3,5 m</option>
+                <option value="4">4 m</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:14px;">
+          <div class="field">
+            <label>Hora inicio / término</label>
+            <div style="display:flex; gap:8px;">
+              <input type="time" id="recHoraInicio">
+              <input type="time" id="recHoraTermino">
+            </div>
+          </div>
+          <div class="field">
+            <label for="recJefeUnidad">Jefe/a de unidad</label>
+            <input type="text" id="recJefeUnidad" oninput="clearError('recJefeUnidad')">
+            <p class="field-error" id="err-recJefeUnidad"></p>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label>Título / licenciatura</label>
+          <div class="chip-group rec-chip-single" id="recTituloJefe">
+            <span class="chip" onclick="toggleChipSingle(this)">Arqueólogo/a titulado/a</span>
+            <span class="chip" onclick="toggleChipSingle(this)">Licenciado/a</span>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:14px;">
+          <div class="field">
+            <label for="recEquipoApoyo">Equipo de apoyo</label>
+            <input type="text" id="recEquipoApoyo" placeholder="nombres separados por coma">
+          </div>
+          <div class="field">
+            <label>Área de densidad</label>
+            <div class="chip-group rec-chip-single" id="recAreaDensidad">
+              <span class="chip" onclick="toggleChipSingle(this)">Alta</span>
+              <span class="chip" onclick="toggleChipSingle(this)">Media</span>
+              <span class="chip" onclick="toggleChipSingle(this)">Baja</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:14px;">
+          <div class="field">
+            <label for="recDatum">Datum</label>
+            <input type="text" id="recDatum" list="datumsConocidos" placeholder="ej. WGS84">
+            <datalist id="datumsConocidos">
+              <option value="WGS84"><option value="PSAD56"><option value="SIRGAS-Chile">
+            </datalist>
+          </div>
+          <div class="field">
+            <label for="recHuso">Huso</label>
+            <input type="text" id="recHuso" list="husosConocidos" placeholder="ej. 18S">
+            <datalist id="husosConocidos">
+              <option value="18S"><option value="19S">
+            </datalist>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <label>Vértices de la unidad</label>
+          <div class="db-table-scroll" style="max-height:none;">
+            <table class="vert-table">
+              <thead><tr><th>Vértice</th><th>UTM Este</th><th>UTM Norte</th><th>Observación</th></tr></thead>
+              <tbody>
+                <tr><td class="vert-label">NO</td><td><input type="text" id="vertNOeste"></td><td><input type="text" id="vertNOnorte"></td><td><input type="text" id="vertNOobs" placeholder="instrumento, waypoint"></td></tr>
+                <tr><td class="vert-label">NE</td><td><input type="text" id="vertNEeste"></td><td><input type="text" id="vertNEnorte"></td><td><input type="text" id="vertNEobs" placeholder="instrumento, waypoint"></td></tr>
+                <tr><td class="vert-label">SE</td><td><input type="text" id="vertSEeste"></td><td><input type="text" id="vertSEnorte"></td><td><input type="text" id="vertSEobs" placeholder="instrumento, waypoint"></td></tr>
+                <tr><td class="vert-label">SO</td><td><input type="text" id="vertSOeste"></td><td><input type="text" id="vertSOnorte"></td><td><input type="text" id="vertSOobs" placeholder="instrumento, waypoint"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label for="recReferenciaObras">Referencia a obras / punto fijo</label>
+          <textarea id="recReferenciaObras"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>B. Condiciones de superficie y procedimiento</h2></div>
+      <div class="card-body">
+        <div class="grid2">
+          <div class="field">
+            <label>Visibilidad</label>
+            <div class="chip-group rec-chip-single" id="recVisibilidad">
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recVisibilidad')">Alta</span>
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recVisibilidad')">Media</span>
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recVisibilidad')">Baja</span>
+            </div>
+            <p class="field-error" id="err-recVisibilidad"></p>
+          </div>
+          <div class="field">
+            <label>Cobertura vegetal</label>
+            <div class="chip-group rec-chip-single" id="recCoberturaVegetal">
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recCoberturaVegetal'); onRecCoberturaChange();">Pastizal</span>
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recCoberturaVegetal'); onRecCoberturaChange();">Renoval</span>
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recCoberturaVegetal'); onRecCoberturaChange();">Desnuda</span>
+              <span class="chip" data-value="Otra" onclick="toggleChipSingle(this); clearError('recCoberturaVegetal'); onRecCoberturaChange();">Otra</span>
+            </div>
+            <p class="field-error" id="err-recCoberturaVegetal"></p>
+            <div class="rec-subfield" id="recCoberturaOtraBox" style="display:none;">
+              <input type="text" id="recCoberturaVegetalOtra" placeholder="Describe la cobertura...">
+            </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <div class="toggle-row" style="padding:6px 0;">
+            <span class="lbl">No se observan agentes de disturbación</span>
+            <div class="switch" id="recSinDisturbacion" onclick="toggleSwitch(this, onRecSinDisturbacionChange)"></div>
+          </div>
+        </div>
+
+        <div id="recDisturbacionBox">
+          <div class="grid2" style="margin-top:4px;">
+            <div class="field">
+              <label>Agentes antrópicos</label>
+              <div class="chip-group" id="recDisturbacionAntropico">
+                <span class="chip" onclick="toggleChip(this)">Maquinaria</span>
+                <span class="chip" onclick="toggleChip(this)">Escarpe / movimiento de tierra</span>
+                <span class="chip" onclick="toggleChip(this)">Tránsito vehicular o peatonal</span>
+                <span class="chip" onclick="toggleChip(this)">Cercos / infraestructura</span>
+                <span class="chip" onclick="toggleChip(this)">Basura subactual</span>
+                <span class="chip" data-value="Otro" onclick="toggleChip(this, onRecAntropicoOtroToggle)">Otro (describir)</span>
+              </div>
+              <div class="rec-subfield" id="recAntropicoOtroBox" style="display:none;">
+                <input type="text" id="recDisturbacionAntropicoOtro" placeholder="Describe el agente...">
+              </div>
+            </div>
+            <div class="field">
+              <label>Agentes naturales</label>
+              <div class="chip-group" id="recDisturbacionNatural">
+                <span class="chip" onclick="toggleChip(this)">Animal (pisoteo, madrigueras)</span>
+                <span class="chip" onclick="toggleChip(this)">Raíces / bioturbación</span>
+                <span class="chip" onclick="toggleChip(this)">Erosión fluvial</span>
+                <span class="chip" onclick="toggleChip(this)">Erosión pluvial o eólica</span>
+                <span class="chip" onclick="toggleChip(this)">Remoción en masa</span>
+                <span class="chip" data-value="Otro" onclick="toggleChip(this, onRecNaturalOtroToggle)">Otro (describir)</span>
+              </div>
+              <div class="rec-subfield" id="recNaturalOtroBox" style="display:none;">
+                <input type="text" id="recDisturbacionNaturalOtro" placeholder="Describe el agente...">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:16px;">
+          <div class="field">
+            <label>Superficie revisada</label>
+            <div class="chip-group rec-chip-single" id="recSuperficieRevisada">
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recSuperficieRevisada'); onRecSuperficieChange();">100% de la unidad</span>
+              <span class="chip" data-value="Otra" onclick="toggleChipSingle(this); clearError('recSuperficieRevisada'); onRecSuperficieChange();">Otra</span>
+            </div>
+            <p class="field-error" id="err-recSuperficieRevisada"></p>
+            <div class="rec-subfield" id="recSuperficieOtraBox" style="display:none;">
+              <input type="text" id="recSuperficieRevisadaOtra" placeholder="Describe qué % o área se revisó...">
+            </div>
+          </div>
+          <div class="field">
+            <label>Modalidad</label>
+            <div class="chip-group rec-chip-single" id="recModalidad">
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recModalidad'); onRecModalidadChange();">Barrido visual sistemático</span>
+              <span class="chip" data-value="Otra" onclick="toggleChipSingle(this); clearError('recModalidad'); onRecModalidadChange();">Otra</span>
+            </div>
+            <p class="field-error" id="err-recModalidad"></p>
+            <div class="rec-subfield" id="recModalidadOtraBox" style="display:none;">
+              <input type="text" id="recModalidadOtra" placeholder="Describe la modalidad...">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:16px;">
+          <div class="field">
+            <label>Resultado</label>
+            <div class="chip-group rec-chip-single" id="recResultado">
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recResultado'); onRecResultadoChange();">Con material</span>
+              <span class="chip" onclick="toggleChipSingle(this); clearError('recResultado'); onRecResultadoChange();">Sin material</span>
+            </div>
+            <p class="field-error" id="err-recResultado"></p>
+          </div>
+          <div class="field" id="recTotalElementosField" style="display:none;">
+            <label for="recTotalElementos">N° total de elementos</label>
+            <input type="number" id="recTotalElementos" min="0" oninput="clearError('recTotalElementos')">
+            <p class="field-error" id="err-recTotalElementos"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>C. Materiales recolectados</h2><span class="hint">100% de las evidencias en superficie</span></div>
+      <div class="card-body">
+        <div class="db-table-scroll" style="max-height:none;">
+          <table class="mat-rec-table" id="matRecTable">
+            <thead>
+              <tr><th>Materialidad</th><th>Cantidad</th><th>N° bolsa</th><th>Foto cenital</th><th>Foto unidad (desde N)</th><th>Foto detalle</th><th>Descripción / observaciones</th></tr>
+            </thead>
+            <tbody id="matRecTbody"></tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top:8px;">Deja la cantidad en 0 (o en blanco) en las materialidades que no se recolectaron — esas filas no se guardan.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>D. Croquis de planta</h2><span class="hint">Unidad 4×4 m, cuadrícula de 50 cm</span></div>
+      <div class="card-body">
+        <div class="croquis-toolbar">
+          <span class="chip on" id="croquisToolPen" onclick="setCroquisTool('pen')">✏️ Dibujar</span>
+          <span class="chip" id="croquisToolMark" onclick="setCroquisTool('mark')">📍 Hallazgo numerado</span>
+          <button type="button" class="icon-btn" onclick="undoCroquis()" title="Deshacer">↶</button>
+          <button type="button" class="icon-btn" onclick="clearCroquis()" title="Borrar todo">🗑</button>
+        </div>
+        <canvas id="recCroquisCanvas" width="560" height="560"></canvas>
+        <p class="note">Toca "Dibujar" para trazar a mano alzada, o "Hallazgo numerado" y luego toca el croquis para ubicarlos — se numeran solos. El norte queda fijo arriba a la derecha.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>E. Observaciones</h2></div>
+      <div class="card-body">
+        <textarea id="recObservaciones"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Responsables</h2><span class="hint">Firma digital no implementada — queda el nombre para trazabilidad</span></div>
+      <div class="card-body">
+        <div class="grid2">
+          <div class="field">
+            <label for="recFirmaJefe">Jefe/a de unidad — nombre</label>
+            <input type="text" id="recFirmaJefe">
+          </div>
+          <div class="field">
+            <label for="recFirmaArqueologo">Arqueólogo/a titular — V°B°</label>
+            <input type="text" id="recFirmaArqueologo">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" onclick="onGuardarRecoleccion()" id="btnGuardarRecoleccion">Guardar ficha de recolección</button>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <div class="card-head"><h2>Fichas de recolección guardadas</h2></div>
+      <div class="card-body" id="recFichasList"></div>
+    </div>
+
+  </div>
+</div>
+
 <!-- VISTA: BASE DE DATOS -->
 <div id="viewDatabase" style="display:none;">
   <div class="db-wrap">
     <div class="db-subnav">
       <button class="db-subtab active" id="subtabNiveles" onclick="showDbTable('niveles')">Niveles</button>
       <button class="db-subtab" id="subtabMateriales" onclick="showDbTable('materiales')">Materiales</button>
+      <button class="db-subtab" id="subtabRecoleccion" onclick="showDbTable('recoleccion')">Recolección</button>
+      <button class="db-subtab" id="subtabMaterialesRecoleccion" onclick="showDbTable('materialesRecoleccion')">Materiales recolección</button>
       <div class="db-actions">
         <button class="btn" onclick="loadDbView()">↻ Actualizar</button>
         <button class="btn primary" id="btnExportCsv" onclick="exportCurrentTableCsv()">⬇ Exportar CSV</button>
@@ -1365,6 +1823,12 @@
       <table class="db-table"><thead></thead><tbody></tbody></table>
     </div>
     <div id="dbTableMateriales" class="db-table-scroll" style="display:none;">
+      <table class="db-table"><thead></thead><tbody></tbody></table>
+    </div>
+    <div id="dbTableRecoleccion" class="db-table-scroll" style="display:none;">
+      <table class="db-table"><thead></thead><tbody></tbody></table>
+    </div>
+    <div id="dbTableMaterialesRecoleccion" class="db-table-scroll" style="display:none;">
       <table class="db-table"><thead></thead><tbody></tbody></table>
     </div>
   </div>
@@ -1446,6 +1910,16 @@
       </div>
     </div>
 
+    <div class="card">
+      <div class="card-head"><h2>Pestaña "Ficha Recolección"</h2></div>
+      <div class="card-body">
+        <p class="help-p">Es un formulario aparte, independiente de la ficha de Nivel: se usa para registrar la <strong>recolección superficial de una unidad</strong> (no una excavación por niveles). Se llena <strong>una ficha por unidad de recolección</strong> — el <strong>Código unidad</strong> es obligatorio y único; si repites uno, la app te avisa como en los niveles.</p>
+        <p class="help-p"><strong>C. Materiales recolectados</strong>: la tabla ya trae las categorías típicas (Lítico, Cerámica, Malacológico, etc.). Deja en 0 o en blanco la cantidad de las que no aplican — esas filas simplemente no se guardan.</p>
+        <p class="help-p"><strong>D. Croquis de planta</strong>: puedes dibujar a mano alzada con el dedo o el mouse ("Dibujar"), o tocar "Hallazgo numerado" y luego tocar el croquis para ir marcando puntos — se numeran solos. "Borrar todo" limpia el croquis y "↶" deshace el último trazo o marca.</p>
+        <p class="help-p">Igual que con los niveles, si no hay internet la ficha se guarda localmente como <strong>pendiente</strong> y se sube sola apenas vuelve la señal.</p>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1459,6 +1933,8 @@
   let savedFichas = [];   // { localId, unidad, nivel, estrato, profundidad, snapshot }
   let editingLocalId = null;
   let nextLocalId = 1;
+  let savedRecolecciones = [];   // filas crudas que llegan del servidor (ver GET /recolecciones)
+  let editingRecLocalId = null;
 
   function normalizeProyecto(){
     const el = document.getElementById('proyecto');
@@ -1616,8 +2092,10 @@
     document.getElementById('loginPassword').value = '';
     refreshPreview();
     await refreshFichasFromServer();
+    await refreshRecFichasFromServer();
     updateSyncIndicator();
     trySyncQueue(false);
+    trySyncRecQueue(false);
   }
 
   function doLogout(){
@@ -1626,6 +2104,7 @@
       localStorage.removeItem('estratorama_user_v1');
     } catch(e){}
     savedFichas = [];
+    savedRecolecciones = [];
     document.getElementById('mainApp').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('loginUsuario').value = '';
@@ -2185,9 +2664,15 @@
   function setCachedUnidades(rows){
     try{ localStorage.setItem('estratorama_cache_unidades_v1', JSON.stringify(rows)); } catch(e){}
   }
+  function getCachedRecolecciones(){
+    try{ return JSON.parse(localStorage.getItem('estratorama_cache_recolecciones_v1') || '[]'); } catch(e){ return []; }
+  }
+  function setCachedRecolecciones(rows){
+    try{ localStorage.setItem('estratorama_cache_recolecciones_v1', JSON.stringify(rows)); } catch(e){}
+  }
 
   function updateSyncIndicator(){
-    const q = getQueue();
+    const q = getQueue().concat(getRecQueue());
     const el = document.getElementById('syncIndicator');
     if(!el) return;
     const conflictos = q.filter(x => x.conflict).length;
@@ -2199,7 +2684,7 @@
       el.innerHTML = `<span class="sync-dot ${navigator.onLine ? 'online' : 'offline'}"></span> ` +
         `${q.length} pendiente${q.length === 1 ? '' : 's'}` +
         (conflictos ? ` (${conflictos} con conflicto)` : '') +
-        ` — <button class="sync-btn" onclick="trySyncQueue(true)">Sincronizar ahora</button>`;
+        ` — <button class="sync-btn" onclick="trySyncQueue(true); trySyncRecQueue(true);">Sincronizar ahora</button>`;
     }
   }
 
@@ -2550,19 +3035,731 @@
     }
   }
 
+  // ============================================================
+  // FICHA DE RECOLECCIÓN SUPERFICIAL
+  // ============================================================
+
+  const MATERIALIDADES_REC = ['Lítico', 'Cerámica', 'Malacológico', 'Óseo / arqueofauna', 'Metal', 'Vidrio / loza', 'Otro'];
+
+  function escAttr(v){
+    if(v === null || v === undefined) return '';
+    return String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  }
+
+  function initMatRecTable(prefillRows){
+    const tbody = document.getElementById('matRecTbody');
+    tbody.innerHTML = MATERIALIDADES_REC.map((mat, i) => {
+      const pre = (prefillRows || []).find(p => p.materialidad === mat) || {};
+      let labelCell = mat;
+      if(mat === 'Otro'){
+        labelCell = mat + '<br><input type="text" id="matRecOtroLabel" placeholder="especificar" value="' + escAttr(pre.materialidadOtro) + '" style="margin-top:4px;">';
+      }
+      return '<tr>'
+        + '<td class="mat-label">' + labelCell + '</td>'
+        + '<td><input type="number" min="0" id="matRecCant_' + i + '" value="' + escAttr(pre.cantidad) + '"></td>'
+        + '<td><input type="text" id="matRecBolsa_' + i + '" value="' + escAttr(pre.nBolsa) + '"></td>'
+        + '<td><input type="text" id="matRecFotoCen_' + i + '" value="' + escAttr(pre.fotoCenital) + '"></td>'
+        + '<td><input type="text" id="matRecFotoUni_' + i + '" value="' + escAttr(pre.fotoUnidadCompleta) + '"></td>'
+        + '<td><input type="text" id="matRecFotoDet_' + i + '" value="' + escAttr(pre.fotoDetalle) + '"></td>'
+        + '<td><input type="text" id="matRecDesc_' + i + '" value="' + escAttr(pre.descripcion) + '"></td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function readMatRecRows(){
+    return MATERIALIDADES_REC.map((mat, i) => {
+      const cantidad = Number(document.getElementById('matRecCant_' + i).value) || 0;
+      if(cantidad <= 0) return null;
+      const row = {
+        materialidad: mat,
+        cantidad,
+        nBolsa: document.getElementById('matRecBolsa_' + i).value.trim() || null,
+        fotoCenital: document.getElementById('matRecFotoCen_' + i).value.trim() || null,
+        fotoUnidadCompleta: document.getElementById('matRecFotoUni_' + i).value.trim() || null,
+        fotoDetalle: document.getElementById('matRecFotoDet_' + i).value.trim() || null,
+        descripcion: document.getElementById('matRecDesc_' + i).value.trim() || null,
+      };
+      if(mat === 'Otro'){
+        const lbl = document.getElementById('matRecOtroLabel');
+        row.materialidadOtro = lbl ? (lbl.value.trim() || null) : null;
+      }
+      return row;
+    }).filter(Boolean);
+  }
+
+  function toggleChipSingle(el){
+    const group = el.parentElement;
+    const wasOn = el.classList.contains('on');
+    Array.from(group.children).forEach(c => c.classList.remove('on'));
+    if(!wasOn) el.classList.add('on');
+  }
+
+  function getChipSingleValue(groupId){
+    const on = document.querySelector('#' + groupId + ' .chip.on');
+    return on ? (on.dataset.value || on.textContent) : '';
+  }
+
+  function setChipSingle(groupId, value){
+    const group = document.getElementById(groupId);
+    Array.from(group.children).forEach(c => {
+      const v = c.dataset.value || c.textContent;
+      c.classList.toggle('on', !!value && v === value);
+    });
+  }
+
+  function setChipsMulti(groupId, values){
+    const group = document.getElementById(groupId);
+    Array.from(group.children).forEach(c => {
+      const v = c.dataset.value || c.textContent;
+      c.classList.toggle('on', (values || []).includes(v));
+    });
+  }
+
+  function normalizeRecField(id){
+    const el = document.getElementById(id);
+    el.value = normalizeUsername(el.value);
+  }
+
+  function onRecCoberturaChange(){
+    const val = getChipSingleValue('recCoberturaVegetal');
+    document.getElementById('recCoberturaOtraBox').style.display = val === 'Otra' ? 'block' : 'none';
+  }
+  function onRecSuperficieChange(){
+    const val = getChipSingleValue('recSuperficieRevisada');
+    document.getElementById('recSuperficieOtraBox').style.display = val === 'Otra' ? 'block' : 'none';
+  }
+  function onRecModalidadChange(){
+    const val = getChipSingleValue('recModalidad');
+    document.getElementById('recModalidadOtraBox').style.display = val === 'Otra' ? 'block' : 'none';
+  }
+  function onRecResultadoChange(){
+    const val = getChipSingleValue('recResultado');
+    document.getElementById('recTotalElementosField').style.display = val === 'Con material' ? 'block' : 'none';
+  }
+  function onRecAntropicoOtroToggle(){
+    const on = document.querySelector('#recDisturbacionAntropico .chip:last-child').classList.contains('on');
+    document.getElementById('recAntropicoOtroBox').style.display = on ? 'block' : 'none';
+  }
+  function onRecNaturalOtroToggle(){
+    const on = document.querySelector('#recDisturbacionNatural .chip:last-child').classList.contains('on');
+    document.getElementById('recNaturalOtroBox').style.display = on ? 'block' : 'none';
+  }
+  function onRecSinDisturbacionChange(){
+    const on = document.getElementById('recSinDisturbacion').classList.contains('on');
+    document.getElementById('recDisturbacionBox').style.display = on ? 'none' : 'block';
+  }
+
+  function readVertices(){
+    const v = {};
+    ['NO', 'NE', 'SE', 'SO'].forEach(k => {
+      const este = document.getElementById('vert' + k + 'este').value.trim();
+      const norte = document.getElementById('vert' + k + 'norte').value.trim();
+      const obs = document.getElementById('vert' + k + 'obs').value.trim();
+      if(este || norte || obs) v[k] = { este: este || null, norte: norte || null, obs: obs || null };
+    });
+    return v;
+  }
+  function fillVertices(v){
+    ['NO', 'NE', 'SE', 'SO'].forEach(k => {
+      const d = (v && v[k]) || {};
+      document.getElementById('vert' + k + 'este').value = d.este || '';
+      document.getElementById('vert' + k + 'norte').value = d.norte || '';
+      document.getElementById('vert' + k + 'obs').value = d.obs || '';
+    });
+  }
+
+  // ---------- Croquis de planta (canvas) ----------
+  let croquisTool = 'pen';
+  let croquisActions = [];
+  let croquisMarkerCount = 0;
+  let croquisDrawing = false;
+  let croquisCurrentStroke = null;
+  let croquisLoadedImage = null;
+
+  function initCroquis(){
+    const canvas = document.getElementById('recCroquisCanvas');
+    if(!canvas) return;
+    if(!canvas._croquisInit){
+      canvas._croquisInit = true;
+      canvas.addEventListener('pointerdown', croquisPointerDown);
+      canvas.addEventListener('pointermove', croquisPointerMove);
+      window.addEventListener('pointerup', croquisPointerUp);
+    }
+    redrawCroquis();
+  }
+  function setCroquisTool(tool){
+    croquisTool = tool;
+    document.getElementById('croquisToolPen').classList.toggle('on', tool === 'pen');
+    document.getElementById('croquisToolMark').classList.toggle('on', tool === 'mark');
+  }
+  function croquisPos(e){
+    const canvas = document.getElementById('recCroquisCanvas');
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height),
+    };
+  }
+  function croquisPointerDown(e){
+    if(document.getElementById('viewRecoleccion').style.display === 'none') return;
+    e.preventDefault();
+    const pos = croquisPos(e);
+    if(croquisTool === 'mark'){
+      croquisMarkerCount++;
+      croquisActions.push({ type: 'marker', x: pos.x, y: pos.y, num: croquisMarkerCount });
+      redrawCroquis();
+    } else {
+      croquisDrawing = true;
+      croquisCurrentStroke = { type: 'stroke', points: [pos] };
+    }
+  }
+  function croquisPointerMove(e){
+    if(!croquisDrawing) return;
+    e.preventDefault();
+    croquisCurrentStroke.points.push(croquisPos(e));
+    redrawCroquis(croquisCurrentStroke);
+  }
+  function croquisPointerUp(){
+    if(croquisDrawing && croquisCurrentStroke && croquisCurrentStroke.points.length > 1){
+      croquisActions.push(croquisCurrentStroke);
+    }
+    croquisDrawing = false;
+    croquisCurrentStroke = null;
+    redrawCroquis();
+  }
+  function undoCroquis(){
+    croquisActions.pop();
+    const marcas = croquisActions.filter(a => a.type === 'marker');
+    croquisMarkerCount = marcas.length ? Math.max(...marcas.map(a => a.num)) : 0;
+    redrawCroquis();
+  }
+  function clearCroquis(){
+    croquisActions = [];
+    croquisMarkerCount = 0;
+    croquisLoadedImage = null;
+    redrawCroquis();
+  }
+  function drawCroquisGridAndNorth(ctx, w, h){
+    const isLight = document.documentElement.classList.contains('light-mode');
+    ctx.fillStyle = isLight ? '#FFFFFF' : '#050505';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(122,122,122,0.35)';
+    ctx.lineWidth = 1;
+    const cells = 8;
+    for(let i = 0; i <= cells; i++){
+      const p = i * (w / cells);
+      ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(w, p); ctx.stroke();
+    }
+    ctx.save();
+    ctx.translate(w - 28, 28);
+    ctx.strokeStyle = '#65C82A'; ctx.fillStyle = '#65C82A'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, 16); ctx.lineTo(0, -16); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(-6, -6); ctx.lineTo(6, -6); ctx.closePath(); ctx.fill();
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('N', 0, -20);
+    ctx.restore();
+  }
+  function redrawCroquis(liveStroke){
+    const canvas = document.getElementById('recCroquisCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if(croquisLoadedImage){
+      ctx.drawImage(croquisLoadedImage, 0, 0, canvas.width, canvas.height);
+    } else {
+      drawCroquisGridAndNorth(ctx, canvas.width, canvas.height);
+    }
+    const isLight = document.documentElement.classList.contains('light-mode');
+    ctx.strokeStyle = isLight ? '#1A1A1A' : '#E8E8E8';
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const allActions = liveStroke ? croquisActions.concat([liveStroke]) : croquisActions;
+    allActions.forEach(a => {
+      if(a.type === 'stroke'){
+        ctx.beginPath();
+        a.points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+      } else if(a.type === 'marker'){
+        ctx.beginPath();
+        ctx.fillStyle = '#FF8C17';
+        ctx.arc(a.x, a.y, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#050505';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(a.num, a.x, a.y + 1);
+      }
+    });
+  }
+  function getCroquisDataUrl(){
+    if(!croquisLoadedImage && croquisActions.length === 0) return null;
+    const canvas = document.getElementById('recCroquisCanvas');
+    return canvas.toDataURL('image/png');
+  }
+  function loadCroquisFromDataUrl(dataUrl){
+    croquisActions = [];
+    croquisMarkerCount = 0;
+    croquisLoadedImage = null;
+    if(dataUrl){
+      const img = new Image();
+      img.onload = () => { croquisLoadedImage = img; redrawCroquis(); };
+      img.src = dataUrl;
+    } else {
+      redrawCroquis();
+    }
+  }
+
+  // ---------- Datos fijos del proyecto (no editables por el usuario) ----------
+  const REC_PROYECTO_FIJO = 'proyecto_piscicultura_chayahue_ras_11a';
+  const REC_SITIO_FIJO = 'chayahue-3';
+  const REC_PERMISO_CMN_FIJO = 'Ord. CMN N° 05621-2026 (19.10.2026)';
+  const REC_ARQUEOLOGO_TITULAR_FIJO = 'Verónica Reyes Álvarez';
+
+  function pintarDatosProyectoFijos(){
+    document.getElementById('recProyectoReadout').textContent = REC_PROYECTO_FIJO;
+    document.getElementById('recSitioReadout').textContent = REC_SITIO_FIJO;
+    document.getElementById('recPermisoCmnReadout').textContent = REC_PERMISO_CMN_FIJO;
+    document.getElementById('recArqueologoTitularReadout').textContent = REC_ARQUEOLOGO_TITULAR_FIJO;
+  }
+
+  function setSelectNumeric(id, value){
+    const el = document.getElementById(id);
+    if(value === null || value === undefined || value === ''){ el.value = ''; return; }
+    const num = Number(value);
+    const match = Array.from(el.options).find(o => o.value !== '' && Number(o.value) === num);
+    el.value = match ? match.value : '';
+  }
+
+  // ---------- Construcción y validación del formulario ----------
+  function buildRecPayload(){
+    return {
+      proyecto: REC_PROYECTO_FIJO,
+      sitio: REC_SITIO_FIJO,
+      permisoCmn: REC_PERMISO_CMN_FIJO,
+      arqueologoTitular: REC_ARQUEOLOGO_TITULAR_FIJO,
+      codigoUnidad: document.getElementById('recCodigoUnidad').value.trim(),
+      fecha: document.getElementById('recFecha').value || null,
+      dimLargo: document.getElementById('recDimLargo').value || null,
+      dimAncho: document.getElementById('recDimAncho').value || null,
+      horaInicio: document.getElementById('recHoraInicio').value || null,
+      horaTermino: document.getElementById('recHoraTermino').value || null,
+      jefeUnidad: document.getElementById('recJefeUnidad').value.trim(),
+      tituloJefe: getChipSingleValue('recTituloJefe') || null,
+      equipoApoyo: document.getElementById('recEquipoApoyo').value.trim() || null,
+      areaDensidad: getChipSingleValue('recAreaDensidad') || null,
+      datum: document.getElementById('recDatum').value.trim() || null,
+      huso: document.getElementById('recHuso').value.trim() || null,
+      vertices: readVertices(),
+      referenciaObras: document.getElementById('recReferenciaObras').value.trim() || null,
+      visibilidad: getChipSingleValue('recVisibilidad'),
+      coberturaVegetal: getChipSingleValue('recCoberturaVegetal'),
+      coberturaVegetalOtra: document.getElementById('recCoberturaVegetalOtra').value.trim() || null,
+      sinDisturbacion: document.getElementById('recSinDisturbacion').classList.contains('on'),
+      disturbacionAntropico: getChips('recDisturbacionAntropico'),
+      disturbacionAntropicoOtro: document.getElementById('recDisturbacionAntropicoOtro').value.trim() || null,
+      disturbacionNatural: getChips('recDisturbacionNatural'),
+      disturbacionNaturalOtro: document.getElementById('recDisturbacionNaturalOtro').value.trim() || null,
+      superficieRevisada: getChipSingleValue('recSuperficieRevisada'),
+      superficieRevisadaOtra: document.getElementById('recSuperficieRevisadaOtra').value.trim() || null,
+      modalidad: getChipSingleValue('recModalidad'),
+      modalidadOtra: document.getElementById('recModalidadOtra').value.trim() || null,
+      resultado: getChipSingleValue('recResultado'),
+      totalElementos: document.getElementById('recTotalElementos').value || null,
+      materiales: readMatRecRows(),
+      croquisImagen: getCroquisDataUrl(),
+      observaciones: document.getElementById('recObservaciones').value.trim() || null,
+      firmaJefeUnidad: document.getElementById('recFirmaJefe').value.trim() || null,
+      firmaArqueologo: document.getElementById('recFirmaArqueologo').value.trim() || null,
+    };
+  }
+
+  function clearRecErrors(){
+    ['recCodigoUnidad','recFecha','recJefeUnidad','recVisibilidad',
+     'recCoberturaVegetal','recSuperficieRevisada','recModalidad','recResultado','recTotalElementos'].forEach(clearError);
+  }
+
+  function validateRecForm(){
+    let ok = true;
+    clearRecErrors();
+    const req = (id, msg) => { if(!document.getElementById(id).value.trim()){ showError(id, msg); ok = false; } };
+    req('recCodigoUnidad', 'Falta el código de la unidad.');
+    req('recFecha', 'Falta la fecha.');
+    req('recJefeUnidad', 'Falta el nombre del jefe/a de unidad.');
+
+    if(!getChipSingleValue('recVisibilidad')){ showError('recVisibilidad', 'Elige la visibilidad.'); ok = false; }
+    if(!getChipSingleValue('recCoberturaVegetal')){ showError('recCoberturaVegetal', 'Elige la cobertura vegetal.'); ok = false; }
+    if(!getChipSingleValue('recSuperficieRevisada')){ showError('recSuperficieRevisada', 'Elige la superficie revisada.'); ok = false; }
+    if(!getChipSingleValue('recModalidad')){ showError('recModalidad', 'Elige la modalidad.'); ok = false; }
+    const resultado = getChipSingleValue('recResultado');
+    if(!resultado){ showError('recResultado', 'Elige el resultado.'); ok = false; }
+    if(resultado === 'Con material' && !document.getElementById('recTotalElementos').value){
+      showError('recTotalElementos', 'Indica el N° total de elementos.');
+      ok = false;
+    }
+    return ok;
+  }
+
+  function fillRecForm(p){
+    document.getElementById('recCodigoUnidad').value = p.codigoUnidad || '';
+    document.getElementById('recFecha').value = p.fecha || '';
+    setSelectNumeric('recDimLargo', p.dimLargo);
+    setSelectNumeric('recDimAncho', p.dimAncho);
+    document.getElementById('recHoraInicio').value = p.horaInicio || '';
+    document.getElementById('recHoraTermino').value = p.horaTermino || '';
+    document.getElementById('recJefeUnidad').value = p.jefeUnidad || '';
+    setChipSingle('recTituloJefe', p.tituloJefe);
+    document.getElementById('recEquipoApoyo').value = p.equipoApoyo || '';
+    setChipSingle('recAreaDensidad', p.areaDensidad);
+    document.getElementById('recDatum').value = p.datum || '';
+    document.getElementById('recHuso').value = p.huso || '';
+    fillVertices(p.vertices);
+    document.getElementById('recReferenciaObras').value = p.referenciaObras || '';
+    setChipSingle('recVisibilidad', p.visibilidad);
+    setChipSingle('recCoberturaVegetal', p.coberturaVegetal);
+    document.getElementById('recCoberturaVegetalOtra').value = p.coberturaVegetalOtra || '';
+    onRecCoberturaChange();
+    document.getElementById('recSinDisturbacion').classList.toggle('on', !!p.sinDisturbacion);
+    onRecSinDisturbacionChange();
+    setChipsMulti('recDisturbacionAntropico', p.disturbacionAntropico || []);
+    document.getElementById('recDisturbacionAntropicoOtro').value = p.disturbacionAntropicoOtro || '';
+    onRecAntropicoOtroToggle();
+    setChipsMulti('recDisturbacionNatural', p.disturbacionNatural || []);
+    document.getElementById('recDisturbacionNaturalOtro').value = p.disturbacionNaturalOtro || '';
+    onRecNaturalOtroToggle();
+    setChipSingle('recSuperficieRevisada', p.superficieRevisada);
+    document.getElementById('recSuperficieRevisadaOtra').value = p.superficieRevisadaOtra || '';
+    onRecSuperficieChange();
+    setChipSingle('recModalidad', p.modalidad);
+    document.getElementById('recModalidadOtra').value = p.modalidadOtra || '';
+    onRecModalidadChange();
+    setChipSingle('recResultado', p.resultado);
+    document.getElementById('recTotalElementos').value = p.totalElementos || '';
+    onRecResultadoChange();
+    initMatRecTable(p.materiales || []);
+    loadCroquisFromDataUrl(p.croquisImagen || null);
+    document.getElementById('recObservaciones').value = p.observaciones || '';
+    document.getElementById('recFirmaJefe').value = p.firmaJefeUnidad || '';
+    document.getElementById('recFirmaArqueologo').value = p.firmaArqueologo || '';
+  }
+
+  function resetRecForm(){
+    fillRecForm({ fecha: new Date().toISOString().slice(0, 10), materiales: [] });
+    clearRecErrors();
+  }
+
+  function initRecForm(){
+    pintarDatosProyectoFijos();
+    initMatRecTable([]);
+    initCroquis();
+    document.getElementById('recFecha').value = new Date().toISOString().slice(0, 10);
+  }
+
+  function serverRecRowToPayload(row){
+    return {
+      proyecto: row.proyecto, sitio: row.sitio, permisoCmn: row.permiso_cmn, arqueologoTitular: row.arqueologo_titular,
+      codigoUnidad: row.codigo_unidad, fecha: row.fecha ? String(row.fecha).slice(0, 10) : '',
+      dimLargo: row.dim_largo_m, dimAncho: row.dim_ancho_m,
+      horaInicio: row.hora_inicio, horaTermino: row.hora_termino,
+      jefeUnidad: row.jefe_unidad, tituloJefe: row.titulo_jefe, equipoApoyo: row.equipo_apoyo,
+      areaDensidad: row.area_densidad, datum: row.datum, huso: row.huso,
+      vertices: row.vertices || {}, referenciaObras: row.referencia_obras,
+      visibilidad: row.visibilidad, coberturaVegetal: row.cobertura_vegetal, coberturaVegetalOtra: row.cobertura_vegetal_otra,
+      sinDisturbacion: row.sin_disturbacion,
+      disturbacionAntropico: row.disturbacion_antropico || [], disturbacionAntropicoOtro: row.disturbacion_antropico_otro,
+      disturbacionNatural: row.disturbacion_natural || [], disturbacionNaturalOtro: row.disturbacion_natural_otro,
+      superficieRevisada: row.superficie_revisada, superficieRevisadaOtra: row.superficie_revisada_otra,
+      modalidad: row.modalidad, modalidadOtra: row.modalidad_otra,
+      resultado: row.resultado, totalElementos: row.total_elementos,
+      materiales: (row.materiales || []).map(m => ({
+        materialidad: m.materialidad, materialidadOtro: m.materialidad_otro, cantidad: m.cantidad,
+        nBolsa: m.n_bolsa, fotoCenital: m.foto_cenital, fotoUnidadCompleta: m.foto_unidad_completa,
+        fotoDetalle: m.foto_detalle, descripcion: m.descripcion,
+      })),
+      croquisImagen: row.croquis_imagen,
+      observaciones: row.observaciones,
+      firmaJefeUnidad: row.firma_jefe_unidad, firmaArqueologo: row.firma_arqueologo,
+    };
+  }
+
+  // ---------- Cola de sincronización offline (fichas de recolección) ----------
+  function getRecQueue(){
+    try{ return JSON.parse(localStorage.getItem('estratorama_cola_recoleccion_v1') || '[]'); } catch(e){ return []; }
+  }
+  function saveRecQueue(q){
+    try{ localStorage.setItem('estratorama_cola_recoleccion_v1', JSON.stringify(q)); } catch(e){}
+    updateSyncIndicator();
+  }
+  function addRecToQueue(payload){
+    const q = getRecQueue();
+    q.push({
+      queueId: 'local_rec_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      payload,
+      createdAt: new Date().toISOString(),
+      conflict: false,
+    });
+    saveRecQueue(q);
+  }
+  function removeRecFromQueue(queueId){
+    saveRecQueue(getRecQueue().filter(q => q.queueId !== queueId));
+  }
+  function isRecQueueId(id){
+    return typeof id === 'string' && id.startsWith('local_rec_');
+  }
+
+  let syncingRec = false;
+  async function trySyncRecQueue(manual){
+    if(syncingRec) return;
+    if(!navigator.onLine){
+      if(manual) showToast('Sigues sin conexión — se sincronizará solo cuando vuelva la señal.');
+      return;
+    }
+    const q = getRecQueue();
+    const pendientes = q.filter(x => !x.conflict);
+    if(pendientes.length === 0) return;
+
+    syncingRec = true;
+    let subidos = 0;
+    for(const item of pendientes){
+      try{
+        await apiFetch('/recolecciones', { method: 'POST', body: JSON.stringify(item.payload) });
+        removeRecFromQueue(item.queueId);
+        subidos++;
+      } catch(err){
+        if(err.status === 409 && err.body && err.body.duplicado){
+          const q2 = getRecQueue();
+          const found = q2.find(x => x.queueId === item.queueId);
+          if(found) found.conflict = true;
+          saveRecQueue(q2);
+        } else if(err.network){
+          break;
+        } else {
+          console.warn('Error al sincronizar ficha de recolección:', err);
+          break;
+        }
+      }
+    }
+    syncingRec = false;
+    updateSyncIndicator();
+    if(subidos > 0){
+      showToast(subidos + ' ficha' + (subidos === 1 ? '' : 's') + ' de recolección sincronizada' + (subidos === 1 ? '' : 's') + ' con el servidor');
+      await refreshRecFichasFromServer();
+    }
+  }
+
+  function resolveRecConflict(queueId, forzar){
+    const q = getRecQueue();
+    const item = q.find(x => x.queueId === queueId);
+    if(!item) return;
+    if(forzar){
+      item.payload.forzarDuplicado = true;
+      item.conflict = false;
+      saveRecQueue(q);
+      trySyncRecQueue(true);
+    } else {
+      removeRecFromQueue(queueId);
+      showToast('Ficha de recolección pendiente descartada.');
+      renderRecFichasPanel();
+    }
+  }
+
+  // ---------- Listado / guardado / edición ----------
+  async function refreshRecFichasFromServer(){
+    try{
+      savedRecolecciones = await apiFetch('/recolecciones');
+      setCachedRecolecciones(savedRecolecciones);
+    } catch(err){
+      if(!err.network) console.warn(err);
+      savedRecolecciones = getCachedRecolecciones();
+    }
+    populateCodigosRecoleccionDatalist();
+    renderRecFichasPanel();
+  }
+
+  function populateCodigosRecoleccionDatalist(){
+    const list = document.getElementById('codigosRecoleccionConocidos');
+    const codigos = [...new Set(savedRecolecciones.map(r => r.codigo_unidad))];
+    list.innerHTML = codigos.map(c => `<option value="${c}">`).join('');
+  }
+
+  function getMergedRecFichas(){
+    const reales = savedRecolecciones.map(r => ({
+      localId: r.id, codigoUnidad: r.codigo_unidad, fecha: r.fecha, resultado: r.resultado,
+      row: r, pending: false, conflict: false,
+    }));
+    const pendientes = getRecQueue().map(q => ({
+      localId: q.queueId, codigoUnidad: q.payload.codigoUnidad, fecha: q.payload.fecha, resultado: q.payload.resultado,
+      payload: q.payload, pending: true, conflict: !!q.conflict,
+    }));
+    return [...reales, ...pendientes];
+  }
+
+  function renderRecFichasPanel(){
+    const todas = getMergedRecFichas().sort((a, b) => (a.codigoUnidad || '').localeCompare(b.codigoUnidad || ''));
+    const list = document.getElementById('recFichasList');
+    if(!list) return;
+    if(todas.length === 0){
+      list.innerHTML = '<div class="fichas-empty">Aún no hay fichas de recolección guardadas.</div>';
+      return;
+    }
+    list.innerHTML = todas.map(f => {
+      if(f.conflict){
+        return `
+          <div class="rec-list-item conflict">
+            <div class="rec-li-top"><span class="rec-li-code">${f.codigoUnidad}</span><span class="fi-badge conflict-badge">Conflicto</span></div>
+            <div class="rec-li-meta">Ya existe esta unidad en el servidor.</div>
+            <div class="fi-conflict-actions">
+              <button onclick="event.stopPropagation(); resolveRecConflict('${f.localId}', true)">Forzar guardado</button>
+              <button onclick="event.stopPropagation(); resolveRecConflict('${f.localId}', false)">Descartar</button>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="rec-list-item ${f.localId === editingRecLocalId ? 'editing' : ''}" onclick="editRecFicha('${f.localId}')">
+          <div class="rec-li-top">
+            <span class="rec-li-code">${f.codigoUnidad}</span>
+            <button class="rec-li-del" onclick="event.stopPropagation(); deleteRecFicha('${f.localId}')" title="Eliminar">✕</button>
+          </div>
+          <div class="rec-li-meta">${f.fecha || 'sin fecha'} · ${f.resultado || ''}</div>
+          ${f.pending ? '<span class="fi-badge pending-badge">Pendiente de subir</span>' : ''}
+        </div>`;
+    }).join('');
+  }
+
+  async function onGuardarRecoleccion(){
+    if(!validateRecForm()){ showToast('Revisa los campos marcados en rojo.'); return; }
+    const payload = buildRecPayload();
+    const btn = document.getElementById('btnGuardarRecoleccion');
+    btn.disabled = true;
+
+    if(editingRecLocalId !== null && !isRecQueueId(editingRecLocalId)){
+      if(!navigator.onLine){
+        showToast('Necesitas conexión para editar una ficha que ya está guardada en el servidor.');
+        btn.disabled = false;
+        return;
+      }
+      try{
+        await apiFetch('/recolecciones/' + editingRecLocalId, { method: 'PUT', body: JSON.stringify(payload) });
+        showToast('Ficha de recolección actualizada.');
+        cancelRecEdit();
+        await refreshRecFichasFromServer();
+      } catch(err){
+        showToast(err.message || 'No se pudo editar en el servidor.');
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    if(editingRecLocalId !== null && isRecQueueId(editingRecLocalId)){
+      const q = getRecQueue();
+      const item = q.find(x => x.queueId === editingRecLocalId);
+      if(item){ item.payload = payload; saveRecQueue(q); }
+      showToast('Ficha pendiente actualizada.');
+      cancelRecEdit();
+      btn.disabled = false;
+      if(navigator.onLine) trySyncRecQueue(false);
+      return;
+    }
+
+    if(!navigator.onLine){
+      addRecToQueue(payload);
+      showToast('Sin conexión — ficha guardada localmente. Se sube sola cuando vuelva la señal.');
+      renderRecFichasPanel();
+      resetRecForm();
+      btn.disabled = false;
+      return;
+    }
+
+    try{
+      await apiFetch('/recolecciones', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('Ficha de recolección guardada.');
+      await refreshRecFichasFromServer();
+      resetRecForm();
+    } catch(err){
+      if(err.network){
+        addRecToQueue(payload);
+        showToast('Sin conexión — ficha guardada localmente. Se sube sola cuando vuelva la señal.');
+        renderRecFichasPanel();
+        resetRecForm();
+      } else if(err.status === 409 && err.body && err.body.duplicado){
+        showError('recCodigoUnidad', err.message);
+      } else {
+        showToast(err.message || 'No se pudo guardar en el servidor.');
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function editRecFicha(localId){
+    const entry = getMergedRecFichas().find(f => f.localId === localId);
+    if(!entry || entry.conflict) return;
+    editingRecLocalId = localId;
+    fillRecForm(entry.pending ? entry.payload : serverRecRowToPayload(entry.row));
+    document.getElementById('recEditingBanner').classList.add('show');
+    document.getElementById('recEditingBannerText').textContent = 'Editando ficha ' + entry.codigoUnidad;
+    document.getElementById('btnGuardarRecoleccion').textContent = 'Guardar cambios';
+    renderRecFichasPanel();
+    document.getElementById('viewRecoleccion').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function cancelRecEdit(){
+    editingRecLocalId = null;
+    document.getElementById('recEditingBanner').classList.remove('show');
+    document.getElementById('btnGuardarRecoleccion').textContent = 'Guardar ficha de recolección';
+    resetRecForm();
+    renderRecFichasPanel();
+  }
+
+  async function deleteRecFicha(localId){
+    const entry = getMergedRecFichas().find(f => f.localId === localId);
+    if(!entry) return;
+
+    if(isRecQueueId(localId)){
+      const seguro = confirm('¿Descartar la ficha de recolección ' + entry.codigoUnidad + ' (todavía no se había subido al servidor)?');
+      if(!seguro) return;
+      if(editingRecLocalId === localId) cancelRecEdit();
+      removeRecFromQueue(localId);
+      renderRecFichasPanel();
+      showToast('Ficha de recolección pendiente descartada.');
+      return;
+    }
+
+    if(!navigator.onLine){
+      showToast('Necesitas conexión para eliminar una ficha que ya está guardada en el servidor.');
+      return;
+    }
+
+    const seguro = confirm('¿Eliminar la ficha de recolección ' + entry.codigoUnidad + '? Esta acción no se puede deshacer.');
+    if(!seguro) return;
+
+    try{
+      await apiFetch('/recolecciones/' + localId, { method: 'DELETE' });
+      if(editingRecLocalId === localId) cancelRecEdit();
+      await refreshRecFichasFromServer();
+      showToast('Ficha de recolección eliminada.');
+    } catch(err){
+      showToast(err.message || 'No se pudo eliminar en el servidor.');
+    }
+  }
+
   // ---------- Navegación de vistas ----------
   function showView(view){
     document.getElementById('viewFicha').style.display = view === 'ficha' ? '' : 'none';
+    document.getElementById('viewRecoleccion').style.display = view === 'recoleccion' ? '' : 'none';
     document.getElementById('viewDatabase').style.display = view === 'database' ? '' : 'none';
     document.getElementById('viewInstrucciones').style.display = view === 'instrucciones' ? '' : 'none';
     document.getElementById('tabFicha').classList.toggle('active', view === 'ficha');
+    document.getElementById('tabRecoleccion').classList.toggle('active', view === 'recoleccion');
     document.getElementById('tabDb').classList.toggle('active', view === 'database');
     document.getElementById('tabHelp').classList.toggle('active', view === 'instrucciones');
     if(view === 'database') loadDbView();
+    if(view === 'recoleccion') setTimeout(redrawCroquis, 0);
   }
 
   let dbNivelesRaw = [];
   let dbMaterialesRaw = [];
+  let dbRecoleccionRaw = [];
+  let dbMaterialesRecoleccionRaw = [];
   let dbActiveTable = 'niveles';
 
   const NIVELES_COLS = [
@@ -2579,6 +3776,18 @@
     ['unidad','Unidad'], ['nivel','Nivel'], ['estrato','Estrato'],
     ['tipo_material','Tipo'], ['frecuencia','Frecuencia'], ['descripcion','Descripción'],
     ['responsable','Responsable'], ['creado_en','Creado'],
+  ];
+  const RECOLECCION_COLS = [
+    ['codigo_unidad','Código unidad'], ['proyecto','Proyecto'], ['sitio','Sitio'], ['fecha','Fecha'],
+    ['jefe_unidad','Jefe/a unidad'], ['area_densidad','Área densidad'], ['datum','Datum'], ['huso','Huso'],
+    ['visibilidad','Visibilidad'], ['cobertura_vegetal','Cobertura vegetal'],
+    ['superficie_revisada','Superficie revisada'], ['modalidad','Modalidad'],
+    ['resultado','Resultado'], ['total_elementos','N° elementos'],
+    ['responsable','Responsable'], ['creado_en','Creado'],
+  ];
+  const MATERIALES_RECOLECCION_COLS = [
+    ['codigo_unidad','Código unidad'], ['materialidad','Materialidad'], ['cantidad','Cantidad'],
+    ['n_bolsa','N° bolsa'], ['descripcion','Descripción'], ['responsable','Responsable'], ['creado_en','Creado'],
   ];
 
   function fmtCell(v){
@@ -2620,22 +3829,39 @@
 
   async function loadDbView(){
     try{
-      const niveles = await apiFetch('/niveles');
+      const [niveles, recolecciones] = await Promise.all([
+        apiFetch('/niveles'),
+        apiFetch('/recolecciones'),
+      ]);
       dbNivelesRaw = niveles;
       dbMaterialesRaw = niveles.flatMap(n => n.materiales || []);
+      dbRecoleccionRaw = recolecciones;
+      dbMaterialesRecoleccionRaw = recolecciones.flatMap(r => r.materiales || []);
       renderDbTable('dbTableNiveles', dbNivelesRaw, NIVELES_COLS);
       renderDbTable('dbTableMateriales', dbMaterialesRaw, MATERIALES_COLS);
+      renderDbTable('dbTableRecoleccion', dbRecoleccionRaw, RECOLECCION_COLS);
+      renderDbTable('dbTableMaterialesRecoleccion', dbMaterialesRecoleccionRaw, MATERIALES_RECOLECCION_COLS);
     } catch(err){
       showToast(err.message || 'No se pudo cargar la base de datos.');
     }
   }
 
+  const DB_TABLES = ['niveles', 'materiales', 'recoleccion', 'materialesRecoleccion'];
+  const DB_SUBTAB_IDS = {
+    niveles: 'subtabNiveles', materiales: 'subtabMateriales',
+    recoleccion: 'subtabRecoleccion', materialesRecoleccion: 'subtabMaterialesRecoleccion',
+  };
+  const DB_TABLE_IDS = {
+    niveles: 'dbTableNiveles', materiales: 'dbTableMateriales',
+    recoleccion: 'dbTableRecoleccion', materialesRecoleccion: 'dbTableMaterialesRecoleccion',
+  };
+
   function showDbTable(name){
     dbActiveTable = name;
-    document.getElementById('subtabNiveles').classList.toggle('active', name === 'niveles');
-    document.getElementById('subtabMateriales').classList.toggle('active', name === 'materiales');
-    document.getElementById('dbTableNiveles').style.display = name === 'niveles' ? 'block' : 'none';
-    document.getElementById('dbTableMateriales').style.display = name === 'materiales' ? 'block' : 'none';
+    DB_TABLES.forEach(n => {
+      document.getElementById(DB_SUBTAB_IDS[n]).classList.toggle('active', n === name);
+      document.getElementById(DB_TABLE_IDS[n]).style.display = n === name ? 'block' : 'none';
+    });
   }
 
   function csvEscape(v){
@@ -2644,9 +3870,16 @@
   }
 
   function exportCurrentTableCsv(){
-    const isNiveles = dbActiveTable === 'niveles';
-    const rows = isNiveles ? dbNivelesRaw : dbMaterialesRaw;
-    const cols = isNiveles ? NIVELES_COLS : MATERIALES_COLS;
+    const rowsByTable = {
+      niveles: dbNivelesRaw, materiales: dbMaterialesRaw,
+      recoleccion: dbRecoleccionRaw, materialesRecoleccion: dbMaterialesRecoleccionRaw,
+    };
+    const colsByTable = {
+      niveles: NIVELES_COLS, materiales: MATERIALES_COLS,
+      recoleccion: RECOLECCION_COLS, materialesRecoleccion: MATERIALES_RECOLECCION_COLS,
+    };
+    const rows = rowsByTable[dbActiveTable];
+    const cols = colsByTable[dbActiveTable];
     if(rows.length === 0){ showToast('No hay datos para exportar.'); return; }
 
     const header = cols.map(([, label]) => csvEscape(label)).join(',');
@@ -2660,7 +3893,7 @@
     a.download = 'estratorama_' + dbActiveTable + '_' + new Date().toISOString().slice(0,10) + '.csv';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Descargando ' + (isNiveles ? 'niveles' : 'materiales') + '.csv');
+    showToast('Descargando ' + dbActiveTable + '.csv');
   }
 
   function toggleTheme(){
@@ -2687,9 +3920,10 @@
   initSelects();
   onUnidadChange();
   refreshPreview();
-  window.addEventListener('online', () => { updateSyncIndicator(); trySyncQueue(false); });
+  initRecForm();
+  window.addEventListener('online', () => { updateSyncIndicator(); trySyncQueue(false); trySyncRecQueue(false); });
   window.addEventListener('offline', () => { updateSyncIndicator(); });
-  setInterval(() => { if(navigator.onLine) trySyncQueue(false); }, 25000);
+  setInterval(() => { if(navigator.onLine){ trySyncQueue(false); trySyncRecQueue(false); } }, 25000);
 
   applySavedTheme();
   updateSyncIndicator();
