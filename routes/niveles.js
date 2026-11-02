@@ -111,10 +111,16 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /niveles/:id — edita un nivel existente
+// PUT /niveles/:id — edita un nivel existente (solo quien lo creó puede editarlo)
 router.put('/:id', async (req, res) => {
   const b = req.body;
   const { id } = req.params;
+
+  const owner = await pool.query('SELECT responsable FROM niveles WHERE id = $1', [id]);
+  if (owner.rowCount === 0) return res.status(404).json({ error: 'Nivel no encontrado.' });
+  if (owner.rows[0].responsable !== req.user.username) {
+    return res.status(403).json({ error: 'Solo quien creó este nivel puede editarlo.' });
+  }
 
   const result = await pool.query(
     `UPDATE niveles SET
@@ -139,8 +145,13 @@ router.put('/:id', async (req, res) => {
   res.json(result.rows[0]);
 });
 
-// DELETE /niveles/:id
+// DELETE /niveles/:id (solo quien lo creó puede eliminarlo)
 router.delete('/:id', async (req, res) => {
+  const owner = await pool.query('SELECT responsable FROM niveles WHERE id = $1', [req.params.id]);
+  if (owner.rowCount === 0) return res.status(404).json({ error: 'Nivel no encontrado.' });
+  if (owner.rows[0].responsable !== req.user.username) {
+    return res.status(403).json({ error: 'Solo quien creó este nivel puede eliminarlo.' });
+  }
   const result = await pool.query('DELETE FROM niveles WHERE id = $1 RETURNING id', [req.params.id]);
   if (result.rowCount === 0) return res.status(404).json({ error: 'Nivel no encontrado.' });
   res.json({ ok: true });
