@@ -66,10 +66,10 @@ router.post('/', async (req, res) => {
         sin_disturbacion, disturbacion_antropico, disturbacion_antropico_otro,
         disturbacion_natural, disturbacion_natural_otro,
         superficie_revisada, superficie_revisada_otra, modalidad, modalidad_otra,
-        resultado, total_elementos, croquis_imagen, observaciones,
+        resultado, total_elementos, croquis_imagen, croquis_hallazgos, observaciones,
         firma_jefe_unidad, firma_arqueologo, responsable
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38
       ) RETURNING *`,
       [
         b.proyecto, b.sitio, b.permisoCmn || null, b.arqueologoTitular || null, b.codigoUnidad, b.fecha,
@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
         !!b.sinDisturbacion, b.disturbacionAntropico || [], b.disturbacionAntropicoOtro || null,
         b.disturbacionNatural || [], b.disturbacionNaturalOtro || null,
         b.superficieRevisada, b.superficieRevisadaOtra || null, b.modalidad, b.modalidadOtra || null,
-        b.resultado, b.totalElementos || null, b.croquisImagen || null, b.observaciones || null,
+        b.resultado, b.totalElementos || null, b.croquisImagen || null, JSON.stringify(b.croquisHallazgos || []), b.observaciones || null,
         b.firmaJefeUnidad || null, b.firmaArqueologo || null, responsable,
       ]
     );
@@ -133,9 +133,9 @@ router.put('/:id', async (req, res) => {
         sin_disturbacion=$21, disturbacion_antropico=$22, disturbacion_antropico_otro=$23,
         disturbacion_natural=$24, disturbacion_natural_otro=$25,
         superficie_revisada=$26, superficie_revisada_otra=$27, modalidad=$28, modalidad_otra=$29,
-        resultado=$30, total_elementos=$31, croquis_imagen=$32, observaciones=$33,
-        firma_jefe_unidad=$34, firma_arqueologo=$35
-       WHERE id = $36
+        resultado=$30, total_elementos=$31, croquis_imagen=$32, croquis_hallazgos=$33, observaciones=$34,
+        firma_jefe_unidad=$35, firma_arqueologo=$36
+       WHERE id = $37
        RETURNING *`,
       [
         b.proyecto, b.sitio, b.permisoCmn || null, b.arqueologoTitular || null, b.fecha,
@@ -145,7 +145,7 @@ router.put('/:id', async (req, res) => {
         !!b.sinDisturbacion, b.disturbacionAntropico || [], b.disturbacionAntropicoOtro || null,
         b.disturbacionNatural || [], b.disturbacionNaturalOtro || null,
         b.superficieRevisada, b.superficieRevisadaOtra || null, b.modalidad, b.modalidadOtra || null,
-        b.resultado, b.totalElementos || null, b.croquisImagen || null, b.observaciones || null,
+        b.resultado, b.totalElementos || null, b.croquisImagen || null, JSON.stringify(b.croquisHallazgos || []), b.observaciones || null,
         b.firmaJefeUnidad || null, b.firmaArqueologo || null,
         id,
       ]
