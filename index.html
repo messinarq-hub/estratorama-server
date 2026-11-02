@@ -1532,7 +1532,7 @@
   <div class="fichas-panel">
     <div class="panel-head">
       <h2>Fichas guardadas</h2>
-      <div class="hint">Clic en una unidad, luego en una ficha para editarla</div>
+      <div class="hint">Solo tus propias fichas — clic en una unidad, luego en una ficha para editarla</div>
     </div>
     <div class="unit-tabs" id="unitTabs"></div>
     <div id="fichasList"></div>
@@ -1851,7 +1851,7 @@
     </div>
 
     <div class="card" style="margin-top:24px;">
-      <div class="card-head"><h2>Fichas de recolección guardadas</h2></div>
+      <div class="card-head"><h2>Fichas de recolección guardadas</h2><span class="hint">Solo tus propias fichas</span></div>
       <div class="card-body" id="recFichasList"></div>
     </div>
 
@@ -1861,6 +1861,7 @@
 <!-- VISTA: BASE DE DATOS -->
 <div id="viewDatabase" style="display:none;">
   <div class="db-wrap">
+    <p class="note" style="margin-bottom:10px;">Datos de todo el equipo, solo para consulta y exportar — aquí no se edita ni se borra. Para editar o eliminar tus propias fichas, usa "Fichas guardadas" en Ficha Terreno o Ficha Recolección.</p>
     <div class="db-subnav">
       <div class="db-group-nav">
         <button class="db-group-tab active" id="dbGroupExcavacion" onclick="showDbGroup('excavacion')">Registro Excavación</button>
@@ -2053,6 +2054,10 @@
       throw err;
     }
     return body;
+  }
+
+  function getCurrentUsername(){
+    try{ return localStorage.getItem('estratorama_user_v1') || ''; } catch(e){ return ''; }
   }
 
   function getKnownUsersLocal(){
@@ -2900,7 +2905,8 @@
       ]);
       unidadesInfo = {};
       unidades.forEach(u => { unidadesInfo[u.unidad] = u; });
-      savedFichas = niveles.map(serverRowToEntry);
+      const propios = niveles.filter(n => n.responsable === getCurrentUsername());
+      savedFichas = propios.map(serverRowToEntry);
       setCachedUnidades(unidades);
       setCachedNiveles(niveles);
       renderFichasPanel();
@@ -2914,7 +2920,8 @@
         const niveles = getCachedNiveles();
         unidadesInfo = {};
         unidades.forEach(u => { unidadesInfo[u.unidad] = u; });
-        savedFichas = niveles.map(serverRowToEntry);
+        const propios = niveles.filter(n => n.responsable === getCurrentUsername());
+        savedFichas = propios.map(serverRowToEntry);
         renderFichasPanel();
         const sitios = [...new Set(unidades.map(u => u.sitio).filter(Boolean))];
         document.getElementById('sitiosConocidos').innerHTML = sitios.map(s => `<option value="${s}">`).join('');
@@ -3720,7 +3727,7 @@
   }
 
   function getMergedRecFichas(){
-    const reales = savedRecolecciones.map(r => ({
+    const reales = savedRecolecciones.filter(r => r.responsable === getCurrentUsername()).map(r => ({
       localId: r.id, codigoUnidad: r.codigo_unidad, fecha: r.fecha, resultado: r.resultado,
       row: r, pending: false, conflict: false,
     }));
