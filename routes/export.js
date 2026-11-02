@@ -64,4 +64,41 @@ router.get('/materiales.csv', checkToken, async (req, res) => {
   res.send(toCsv(result.rows, MATERIALES_COLS));
 });
 
+const RECOLECCIONES_COLS = [
+  ['id', 'ID'], ['codigo_unidad', 'Codigo_Unidad'], ['proyecto', 'Proyecto'], ['sitio', 'Sitio'],
+  ['fecha', 'Fecha'], ['dim_largo_m', 'Largo_m'], ['dim_ancho_m', 'Ancho_m'],
+  ['hora_inicio', 'Hora_Inicio'], ['hora_termino', 'Hora_Termino'],
+  ['jefe_unidad', 'Jefe_Unidad'], ['titulo_jefe', 'Titulo_Jefe'], ['equipo_apoyo', 'Equipo_Apoyo'],
+  ['area_densidad', 'Area_Densidad'], ['datum', 'Datum'], ['huso', 'Huso'],
+  ['referencia_obras', 'Referencia_Obras'],
+  ['visibilidad', 'Visibilidad'], ['cobertura_vegetal', 'Cobertura_Vegetal'],
+  ['sin_disturbacion', 'Sin_Disturbacion'],
+  ['disturbacion_antropico', 'Disturbacion_Antropico'], ['disturbacion_natural', 'Disturbacion_Natural'],
+  ['superficie_revisada', 'Superficie_Revisada'], ['modalidad', 'Modalidad'],
+  ['resultado', 'Resultado'], ['total_elementos', 'Total_Elementos'],
+  ['observaciones', 'Observaciones'],
+  ['firma_jefe_unidad', 'Firma_Jefe_Unidad'], ['firma_arqueologo', 'Firma_Arqueologo'],
+  ['responsable', 'Responsable'], ['creado_en', 'Creado_En'],
+];
+
+const MATERIALES_RECOLECCION_COLS = [
+  ['id', 'ID_Material'], ['id_recoleccion', 'ID_Recoleccion'], ['codigo_unidad', 'Codigo_Unidad'],
+  ['materialidad', 'Materialidad'], ['materialidad_otro', 'Materialidad_Otro'],
+  ['cantidad', 'Cantidad'], ['n_bolsa', 'N_Bolsa'],
+  ['foto_cenital', 'Foto_Cenital'], ['foto_unidad_completa', 'Foto_Unidad_Completa'], ['foto_detalle', 'Foto_Detalle'],
+  ['descripcion', 'Descripcion'], ['responsable', 'Responsable'], ['creado_en', 'Creado_En'],
+];
+
+router.get('/recolecciones.csv', checkToken, async (req, res) => {
+  const result = await pool.query('SELECT * FROM recolecciones ORDER BY codigo_unidad');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.send(toCsv(result.rows, RECOLECCIONES_COLS));
+});
+
+router.get('/materiales-recoleccion.csv', checkToken, async (req, res) => {
+  const result = await pool.query('SELECT * FROM materiales_recoleccion ORDER BY codigo_unidad');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.send(toCsv(result.rows, MATERIALES_RECOLECCION_COLS));
+});
+
 module.exports = router;
