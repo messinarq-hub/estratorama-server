@@ -1594,7 +1594,7 @@
           <div class="field">
             <label>Dimensiones (máx. 4 × 4 m)</label>
             <div style="display:flex; gap:8px;">
-              <select id="recDimLargo">
+              <select id="recDimLargo" onchange="updateCroquisGrid()">
                 <option value="">largo</option>
                 <option value="0.5">0,5 m</option>
                 <option value="1">1 m</option>
@@ -1605,7 +1605,7 @@
                 <option value="3.5">3,5 m</option>
                 <option value="4">4 m</option>
               </select>
-              <select id="recDimAncho">
+              <select id="recDimAncho" onchange="updateCroquisGrid()">
                 <option value="">ancho</option>
                 <option value="0.5">0,5 m</option>
                 <option value="1">1 m</option>
@@ -1819,7 +1819,7 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h2>D. Croquis de planta</h2><span class="hint">Unidad 4×4 m, cuadrícula de 50 cm, reglas cada 10 cm</span></div>
+      <div class="card-head"><h2>D. Croquis de planta</h2><span class="hint" id="croquisHintUnidad">Unidad 4×4 m, cuadrícula de 50 cm, reglas cada 10 cm</span></div>
       <div class="card-body">
         <div class="croquis-toolbar">
           <span class="chip on" id="croquisToolPen" onclick="setCroquisTool('pen')">✏️ Dibujar</span>
@@ -3354,36 +3354,69 @@
     const entry = croquisHallazgosData.find(h => h.num === num);
     if(entry) entry.materialidad = value;
   }
+  function getCroquisDims(){
+    const largoSel = document.getElementById('recDimLargo');
+    const anchoSel = document.getElementById('recDimAncho');
+    const largo = largoSel && largoSel.value ? Number(largoSel.value) : 4;
+    const ancho = anchoSel && anchoSel.value ? Number(anchoSel.value) : 4;
+    return { largo, ancho };
+  }
+  function updateCroquisHint(){
+    const { largo, ancho } = getCroquisDims();
+    const hintEl = document.getElementById('croquisHintUnidad');
+    if(!hintEl) return;
+    const fmt = (n) => String(n).replace('.', ',');
+    hintEl.textContent = 'Unidad ' + fmt(ancho) + '×' + fmt(largo) + ' m, cuadrícula de 50 cm, reglas cada 10 cm';
+  }
+  function updateCroquisGrid(){
+    updateCroquisHint();
+    redrawCroquis();
+  }
   function drawCroquisGridAndNorth(ctx, w, h){
     const isLight = document.documentElement.classList.contains('light-mode');
     ctx.fillStyle = isLight ? '#FFFFFF' : '#050505';
     ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = 'rgba(122,122,122,0.35)';
     ctx.lineWidth = 1;
-    const cells = 8; // unidad 4×4 m, cuadrícula principal cada 50 cm
-    for(let i = 0; i <= cells; i++){
-      const p = i * (w / cells);
+    const { largo, ancho } = getCroquisDims(); // ancho = eje X (horizontal), largo = eje Y (vertical)
+    const cellsX = Math.max(1, Math.round(ancho * 2)); // cuadrícula principal cada 50 cm
+    const cellsY = Math.max(1, Math.round(largo * 2));
+    for(let i = 0; i <= cellsX; i++){
+      const p = i * (w / cellsX);
       ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, h); ctx.stroke();
+    }
+    for(let j = 0; j <= cellsY; j++){
+      const p = j * (h / cellsY);
       ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(w, p); ctx.stroke();
     }
 
     // Reglas de medida cada 10 cm en los ejes X (borde superior) e Y (borde
-    // izquierdo), calculadas automático según el tamaño total de la cuadrícula.
-    const totalCm = cells * 50;
-    const pxPerCm = w / totalCm;
+    // izquierdo), calculadas automático según el tamaño de la cuadrícula seteado arriba (B).
+    const totalCmX = ancho * 100;
+    const totalCmY = largo * 100;
+    const pxPerCmX = w / totalCmX;
+    const pxPerCmY = h / totalCmY;
     ctx.strokeStyle = isLight ? 'rgba(26,26,26,0.55)' : 'rgba(232,232,232,0.55)';
     ctx.fillStyle = isLight ? 'rgba(26,26,26,0.8)' : 'rgba(232,232,232,0.8)';
     ctx.font = '9px sans-serif';
     ctx.lineWidth = 1;
-    for(let cm = 0; cm <= totalCm; cm += 10){
-      const p = cm * pxPerCm;
+    for(let cm = 0; cm <= totalCmX; cm += 10){
+      const p = cm * pxPerCmX;
       const major = cm % 50 === 0;
       const tickLen = major ? 9 : 5;
       ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, tickLen); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(tickLen, p); ctx.stroke();
       if(major && cm > 0){
         ctx.textAlign = 'left'; ctx.textBaseline = 'top';
         ctx.fillText(String(cm), p + 2, tickLen);
+      }
+    }
+    for(let cm = 0; cm <= totalCmY; cm += 10){
+      const p = cm * pxPerCmY;
+      const major = cm % 50 === 0;
+      const tickLen = major ? 9 : 5;
+      ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(tickLen, p); ctx.stroke();
+      if(major && cm > 0){
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
         ctx.fillText(String(cm), tickLen + 2, p + 1);
       }
     }
@@ -3580,6 +3613,7 @@
     onRecResultadoChange();
     initMatRecTable(p.materiales || []);
     recalcTotalElementos();
+    updateCroquisHint();
     loadCroquisFromDataUrl(p.croquisImagen || null, p.croquisHallazgos || []);
     document.getElementById('recObservaciones').value = p.observaciones || '';
   }
