@@ -848,10 +848,34 @@
     padding:0 20px 60px;
   }
   .db-subnav{
+    margin-bottom:14px;
+  }
+  .db-group-nav{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .db-group-tab{
+    font-family:var(--sans);
+    font-size:13px;
+    font-weight:700;
+    padding:8px 16px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--panel);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .db-group-tab.active{
+    border-color:var(--accent2);
+    color:var(--paper);
+    background:var(--accent2);
+  }
+  .db-subtabs-row{
     display:flex;
     align-items:center;
     gap:8px;
-    margin-bottom:14px;
     flex-wrap:wrap;
   }
   .db-subtab{
@@ -1038,6 +1062,49 @@
     touch-action:none;
     cursor:crosshair;
     background:var(--paper);
+    flex:0 0 auto;
+  }
+  .croquis-layout{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .croquis-hallazgos{
+    flex:1 1 180px;
+    min-width:170px;
+    max-width:260px;
+  }
+  .croquis-hallazgos h3{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--ink-soft);
+    margin:4px 0 8px;
+  }
+  .croquis-hallazgo-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .croquis-hallazgo-num{
+    flex:0 0 auto;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    background:#FF8C17;
+    color:#050505;
+    font-weight:700;
+    font-size:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .croquis-hallazgo-row select{
+    flex:1 1 auto;
+    font-size:12.5px;
+    padding:5px 6px;
   }
   .rec-list-item{
     background:var(--panel);
@@ -1117,7 +1184,7 @@
 </div>
 
 <div class="view-nav">
-  <button class="view-tab active" id="tabFicha" onclick="showView('ficha')">Ficha</button>
+  <button class="view-tab active" id="tabFicha" onclick="showView('ficha')">Ficha Terreno</button>
   <button class="view-tab" id="tabRecoleccion" onclick="showView('recoleccion')">Ficha Recolección</button>
   <button class="view-tab" id="tabDb" onclick="showView('database')">Base de datos</button>
   <button class="view-tab" id="tabHelp" onclick="showView('instrucciones')">Instrucciones</button>
@@ -1593,18 +1660,12 @@
 
         <div class="grid2" style="margin-top:14px;">
           <div class="field">
-            <label for="recDatum">Datum</label>
-            <input type="text" id="recDatum" list="datumsConocidos" placeholder="ej. WGS84">
-            <datalist id="datumsConocidos">
-              <option value="WGS84"><option value="PSAD56"><option value="SIRGAS-Chile">
-            </datalist>
+            <label>Datum</label>
+            <div class="readout" id="recDatumReadout"></div>
           </div>
           <div class="field">
-            <label for="recHuso">Huso</label>
-            <input type="text" id="recHuso" list="husosConocidos" placeholder="ej. 18S">
-            <datalist id="husosConocidos">
-              <option value="18S"><option value="19S">
-            </datalist>
+            <label>Huso</label>
+            <div class="readout" id="recHusoReadout"></div>
           </div>
         </div>
 
@@ -1734,7 +1795,8 @@
           </div>
           <div class="field" id="recTotalElementosField" style="display:none;">
             <label for="recTotalElementos">N° total de elementos</label>
-            <input type="number" id="recTotalElementos" min="0" oninput="clearError('recTotalElementos')">
+            <input type="number" id="recTotalElementos" min="0" readonly>
+            <p class="note" style="margin-top:4px;">Se suma automático según las cantidades de la tabla de materiales (C).</p>
             <p class="field-error" id="err-recTotalElementos"></p>
           </div>
         </div>
@@ -1757,7 +1819,7 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h2>D. Croquis de planta</h2><span class="hint">Unidad 4×4 m, cuadrícula de 50 cm</span></div>
+      <div class="card-head"><h2>D. Croquis de planta</h2><span class="hint">Unidad 4×4 m, cuadrícula de 50 cm, reglas cada 10 cm</span></div>
       <div class="card-body">
         <div class="croquis-toolbar">
           <span class="chip on" id="croquisToolPen" onclick="setCroquisTool('pen')">✏️ Dibujar</span>
@@ -1765,8 +1827,15 @@
           <button type="button" class="icon-btn" onclick="undoCroquis()" title="Deshacer">↶</button>
           <button type="button" class="icon-btn" onclick="clearCroquis()" title="Borrar todo">🗑</button>
         </div>
-        <canvas id="recCroquisCanvas" width="560" height="560"></canvas>
-        <p class="note">Toca "Dibujar" para trazar a mano alzada, o "Hallazgo numerado" y luego toca el croquis para ubicarlos — se numeran solos. El norte queda fijo arriba a la derecha.</p>
+        <div class="croquis-layout">
+          <canvas id="recCroquisCanvas" width="560" height="560"></canvas>
+          <div class="croquis-hallazgos" id="croquisHallazgosList">
+            <h3>Hallazgos numerados</h3>
+            <p class="note" id="croquisHallazgosEmpty">Aún no hay marcas en el croquis.</p>
+            <div id="croquisHallazgosRows"></div>
+          </div>
+        </div>
+        <p class="note">Toca "Dibujar" para trazar a mano alzada, o "Hallazgo numerado" y luego toca el croquis para ubicarlos — se numeran solos y aparecen a la derecha para indicar qué material es. Las reglas de los bordes marcan cada 10 cm. El norte queda fijo arriba a la derecha.</p>
       </div>
     </div>
 
@@ -1774,22 +1843,6 @@
       <div class="card-head"><h2>E. Observaciones</h2></div>
       <div class="card-body">
         <textarea id="recObservaciones"></textarea>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h2>Responsables</h2><span class="hint">Firma digital no implementada — queda el nombre para trazabilidad</span></div>
-      <div class="card-body">
-        <div class="grid2">
-          <div class="field">
-            <label for="recFirmaJefe">Jefe/a de unidad — nombre</label>
-            <input type="text" id="recFirmaJefe">
-          </div>
-          <div class="field">
-            <label for="recFirmaArqueologo">Arqueólogo/a titular — V°B°</label>
-            <input type="text" id="recFirmaArqueologo">
-          </div>
-        </div>
       </div>
     </div>
 
@@ -1809,13 +1862,25 @@
 <div id="viewDatabase" style="display:none;">
   <div class="db-wrap">
     <div class="db-subnav">
-      <button class="db-subtab active" id="subtabNiveles" onclick="showDbTable('niveles')">Niveles</button>
-      <button class="db-subtab" id="subtabMateriales" onclick="showDbTable('materiales')">Materiales</button>
-      <button class="db-subtab" id="subtabRecoleccion" onclick="showDbTable('recoleccion')">Recolección</button>
-      <button class="db-subtab" id="subtabMaterialesRecoleccion" onclick="showDbTable('materialesRecoleccion')">Materiales recolección</button>
-      <div class="db-actions">
-        <button class="btn" onclick="loadDbView()">↻ Actualizar</button>
-        <button class="btn primary" id="btnExportCsv" onclick="exportCurrentTableCsv()">⬇ Exportar CSV</button>
+      <div class="db-group-nav">
+        <button class="db-group-tab active" id="dbGroupExcavacion" onclick="showDbGroup('excavacion')">Registro Excavación</button>
+        <button class="db-group-tab" id="dbGroupRecoleccion" onclick="showDbGroup('recoleccion')">Registro Recolección</button>
+      </div>
+      <div class="db-subtabs-row" id="dbSubtabsExcavacion">
+        <button class="db-subtab active" id="subtabNiveles" onclick="showDbTable('niveles')">Niveles</button>
+        <button class="db-subtab" id="subtabMateriales" onclick="showDbTable('materiales')">Materiales</button>
+        <div class="db-actions">
+          <button class="btn" onclick="loadDbView()">↻ Actualizar</button>
+          <button class="btn primary" id="btnExportCsv" onclick="exportCurrentTableCsv()">⬇ Exportar CSV</button>
+        </div>
+      </div>
+      <div class="db-subtabs-row" id="dbSubtabsRecoleccion" style="display:none;">
+        <button class="db-subtab" id="subtabRecoleccion" onclick="showDbTable('recoleccion')">Recolección</button>
+        <button class="db-subtab" id="subtabMaterialesRecoleccion" onclick="showDbTable('materialesRecoleccion')">Materiales recolección</button>
+        <div class="db-actions">
+          <button class="btn" onclick="loadDbView()">↻ Actualizar</button>
+          <button class="btn primary" onclick="exportCurrentTableCsv()">⬇ Exportar CSV</button>
+        </div>
       </div>
     </div>
 
@@ -1914,8 +1979,8 @@
       <div class="card-head"><h2>Pestaña "Ficha Recolección"</h2></div>
       <div class="card-body">
         <p class="help-p">Es un formulario aparte, independiente de la ficha de Nivel: se usa para registrar la <strong>recolección superficial de una unidad</strong> (no una excavación por niveles). Se llena <strong>una ficha por unidad de recolección</strong> — el <strong>Código unidad</strong> es obligatorio y único; si repites uno, la app te avisa como en los niveles.</p>
-        <p class="help-p"><strong>C. Materiales recolectados</strong>: la tabla ya trae las categorías típicas (Lítico, Cerámica, Malacológico, etc.). Deja en 0 o en blanco la cantidad de las que no aplican — esas filas simplemente no se guardan.</p>
-        <p class="help-p"><strong>D. Croquis de planta</strong>: puedes dibujar a mano alzada con el dedo o el mouse ("Dibujar"), o tocar "Hallazgo numerado" y luego tocar el croquis para ir marcando puntos — se numeran solos. "Borrar todo" limpia el croquis y "↶" deshace el último trazo o marca.</p>
+        <p class="help-p"><strong>C. Materiales recolectados</strong>: la tabla ya trae las categorías típicas (Lítico, Cerámica, Malacológico, etc.). Deja en 0 o en blanco la cantidad de las que no aplican — esas filas simplemente no se guardan. El <strong>N° total de elementos</strong> se suma solo, según esas cantidades — no se edita a mano.</p>
+        <p class="help-p"><strong>D. Croquis de planta</strong>: puedes dibujar a mano alzada con el dedo o el mouse ("Dibujar"), o tocar "Hallazgo numerado" y luego tocar el croquis para ir marcando puntos — se numeran solos. Las reglas de los bordes marcan cada 10 cm. A la derecha del croquis aparece un listado con cada número para indicar qué tipo de material es ese hallazgo. "Borrar todo" limpia el croquis y "↶" deshace el último trazo o marca.</p>
         <p class="help-p">Igual que con los niveles, si no hay internet la ficha se guarda localmente como <strong>pendiente</strong> y se sube sola apenas vuelve la señal.</p>
       </div>
     </div>
@@ -3056,7 +3121,7 @@
       }
       return '<tr>'
         + '<td class="mat-label">' + labelCell + '</td>'
-        + '<td><input type="number" min="0" id="matRecCant_' + i + '" value="' + escAttr(pre.cantidad) + '"></td>'
+        + '<td><input type="number" min="0" id="matRecCant_' + i + '" value="' + escAttr(pre.cantidad) + '" oninput="recalcTotalElementos()"></td>'
         + '<td><input type="text" id="matRecBolsa_' + i + '" value="' + escAttr(pre.nBolsa) + '"></td>'
         + '<td><input type="text" id="matRecFotoCen_' + i + '" value="' + escAttr(pre.fotoCenital) + '"></td>'
         + '<td><input type="text" id="matRecFotoUni_' + i + '" value="' + escAttr(pre.fotoUnidadCompleta) + '"></td>'
@@ -3085,6 +3150,18 @@
       }
       return row;
     }).filter(Boolean);
+  }
+
+  function recalcTotalElementos(){
+    let total = 0;
+    MATERIALIDADES_REC.forEach((_, i) => {
+      const el = document.getElementById('matRecCant_' + i);
+      const v = el ? Number(el.value) : 0;
+      if(v > 0) total += v;
+    });
+    const field = document.getElementById('recTotalElementos');
+    field.value = total > 0 ? total : '';
+    clearError('recTotalElementos');
   }
 
   function toggleChipSingle(el){
@@ -3175,6 +3252,7 @@
   let croquisDrawing = false;
   let croquisCurrentStroke = null;
   let croquisLoadedImage = null;
+  let croquisHallazgosData = []; // [{num, materialidad}] — listado a la derecha del croquis
 
   function initCroquis(){
     const canvas = document.getElementById('recCroquisCanvas');
@@ -3185,6 +3263,7 @@
       canvas.addEventListener('pointermove', croquisPointerMove);
       window.addEventListener('pointerup', croquisPointerUp);
     }
+    renderCroquisHallazgosList();
     redrawCroquis();
   }
   function setCroquisTool(tool){
@@ -3207,6 +3286,8 @@
     if(croquisTool === 'mark'){
       croquisMarkerCount++;
       croquisActions.push({ type: 'marker', x: pos.x, y: pos.y, num: croquisMarkerCount });
+      croquisHallazgosData.push({ num: croquisMarkerCount, materialidad: '' });
+      renderCroquisHallazgosList();
       redrawCroquis();
     } else {
       croquisDrawing = true;
@@ -3231,13 +3312,40 @@
     croquisActions.pop();
     const marcas = croquisActions.filter(a => a.type === 'marker');
     croquisMarkerCount = marcas.length ? Math.max(...marcas.map(a => a.num)) : 0;
+    croquisHallazgosData = croquisHallazgosData.filter(h => h.num <= croquisMarkerCount);
+    renderCroquisHallazgosList();
     redrawCroquis();
   }
   function clearCroquis(){
     croquisActions = [];
     croquisMarkerCount = 0;
     croquisLoadedImage = null;
+    croquisHallazgosData = [];
+    renderCroquisHallazgosList();
     redrawCroquis();
+  }
+  function renderCroquisHallazgosList(){
+    const rowsBox = document.getElementById('croquisHallazgosRows');
+    const emptyMsg = document.getElementById('croquisHallazgosEmpty');
+    if(!rowsBox) return;
+    if(croquisHallazgosData.length === 0){
+      rowsBox.innerHTML = '';
+      emptyMsg.style.display = 'block';
+      return;
+    }
+    emptyMsg.style.display = 'none';
+    rowsBox.innerHTML = croquisHallazgosData.map(h => {
+      const options = ['<option value="">— elegir —</option>']
+        .concat(MATERIALIDADES_REC.map(m =>
+          '<option value="' + escAttr(m) + '"' + (m === h.materialidad ? ' selected' : '') + '>' + m + '</option>'
+        )).join('');
+      return '<div class="croquis-hallazgo-row"><span class="croquis-hallazgo-num">' + h.num + '</span>'
+        + '<select onchange="setCroquisHallazgoMaterial(' + h.num + ', this.value)">' + options + '</select></div>';
+    }).join('');
+  }
+  function setCroquisHallazgoMaterial(num, value){
+    const entry = croquisHallazgosData.find(h => h.num === num);
+    if(entry) entry.materialidad = value;
   }
   function drawCroquisGridAndNorth(ctx, w, h){
     const isLight = document.documentElement.classList.contains('light-mode');
@@ -3245,12 +3353,34 @@
     ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = 'rgba(122,122,122,0.35)';
     ctx.lineWidth = 1;
-    const cells = 8;
+    const cells = 8; // unidad 4×4 m, cuadrícula principal cada 50 cm
     for(let i = 0; i <= cells; i++){
       const p = i * (w / cells);
       ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, h); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(w, p); ctx.stroke();
     }
+
+    // Reglas de medida cada 10 cm en los ejes X (borde superior) e Y (borde
+    // izquierdo), calculadas automático según el tamaño total de la cuadrícula.
+    const totalCm = cells * 50;
+    const pxPerCm = w / totalCm;
+    ctx.strokeStyle = isLight ? 'rgba(26,26,26,0.55)' : 'rgba(232,232,232,0.55)';
+    ctx.fillStyle = isLight ? 'rgba(26,26,26,0.8)' : 'rgba(232,232,232,0.8)';
+    ctx.font = '9px sans-serif';
+    ctx.lineWidth = 1;
+    for(let cm = 0; cm <= totalCm; cm += 10){
+      const p = cm * pxPerCm;
+      const major = cm % 50 === 0;
+      const tickLen = major ? 9 : 5;
+      ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, tickLen); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(tickLen, p); ctx.stroke();
+      if(major && cm > 0){
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(String(cm), p + 2, tickLen);
+        ctx.fillText(String(cm), tickLen + 2, p + 1);
+      }
+    }
+
     ctx.save();
     ctx.translate(w - 28, 28);
     ctx.strokeStyle = '#65C82A'; ctx.fillStyle = '#65C82A'; ctx.lineWidth = 2;
@@ -3295,10 +3425,17 @@
     const canvas = document.getElementById('recCroquisCanvas');
     return canvas.toDataURL('image/png');
   }
-  function loadCroquisFromDataUrl(dataUrl){
+  function loadCroquisFromDataUrl(dataUrl, hallazgosPrefill){
     croquisActions = [];
-    croquisMarkerCount = 0;
     croquisLoadedImage = null;
+    let list = hallazgosPrefill || [];
+    if(typeof list === 'string'){
+      try{ list = JSON.parse(list); } catch(e){ list = []; }
+    }
+    if(!Array.isArray(list)) list = [];
+    croquisHallazgosData = list.map(h => ({ num: h.num, materialidad: h.materialidad || '' }));
+    croquisMarkerCount = croquisHallazgosData.length ? Math.max(...croquisHallazgosData.map(h => h.num)) : 0;
+    renderCroquisHallazgosList();
     if(dataUrl){
       const img = new Image();
       img.onload = () => { croquisLoadedImage = img; redrawCroquis(); };
@@ -3313,12 +3450,16 @@
   const REC_SITIO_FIJO = 'chayahue-3';
   const REC_PERMISO_CMN_FIJO = 'Ord. CMN N° 05621-2026 (19.10.2026)';
   const REC_ARQUEOLOGO_TITULAR_FIJO = 'Verónica Reyes Álvarez';
+  const REC_DATUM_FIJO = 'WGS84';
+  const REC_HUSO_FIJO = '18S';
 
   function pintarDatosProyectoFijos(){
     document.getElementById('recProyectoReadout').textContent = REC_PROYECTO_FIJO;
     document.getElementById('recSitioReadout').textContent = REC_SITIO_FIJO;
     document.getElementById('recPermisoCmnReadout').textContent = REC_PERMISO_CMN_FIJO;
     document.getElementById('recArqueologoTitularReadout').textContent = REC_ARQUEOLOGO_TITULAR_FIJO;
+    document.getElementById('recDatumReadout').textContent = REC_DATUM_FIJO;
+    document.getElementById('recHusoReadout').textContent = REC_HUSO_FIJO;
   }
 
   function setSelectNumeric(id, value){
@@ -3346,8 +3487,8 @@
       tituloJefe: getChipSingleValue('recTituloJefe') || null,
       equipoApoyo: document.getElementById('recEquipoApoyo').value.trim() || null,
       areaDensidad: getChipSingleValue('recAreaDensidad') || null,
-      datum: document.getElementById('recDatum').value.trim() || null,
-      huso: document.getElementById('recHuso').value.trim() || null,
+      datum: REC_DATUM_FIJO,
+      huso: REC_HUSO_FIJO,
       vertices: readVertices(),
       referenciaObras: document.getElementById('recReferenciaObras').value.trim() || null,
       visibilidad: getChipSingleValue('recVisibilidad'),
@@ -3366,9 +3507,8 @@
       totalElementos: document.getElementById('recTotalElementos').value || null,
       materiales: readMatRecRows(),
       croquisImagen: getCroquisDataUrl(),
+      croquisHallazgos: croquisHallazgosData,
       observaciones: document.getElementById('recObservaciones').value.trim() || null,
-      firmaJefeUnidad: document.getElementById('recFirmaJefe').value.trim() || null,
-      firmaArqueologo: document.getElementById('recFirmaArqueologo').value.trim() || null,
     };
   }
 
@@ -3391,8 +3531,8 @@
     if(!getChipSingleValue('recModalidad')){ showError('recModalidad', 'Elige la modalidad.'); ok = false; }
     const resultado = getChipSingleValue('recResultado');
     if(!resultado){ showError('recResultado', 'Elige el resultado.'); ok = false; }
-    if(resultado === 'Con material' && !document.getElementById('recTotalElementos').value){
-      showError('recTotalElementos', 'Indica el N° total de elementos.');
+    if(resultado === 'Con material' && !(Number(document.getElementById('recTotalElementos').value) > 0)){
+      showError('recTotalElementos', 'Agrega al menos un material con cantidad mayor a 0 en la tabla (C).');
       ok = false;
     }
     return ok;
@@ -3409,8 +3549,6 @@
     setChipSingle('recTituloJefe', p.tituloJefe);
     document.getElementById('recEquipoApoyo').value = p.equipoApoyo || '';
     setChipSingle('recAreaDensidad', p.areaDensidad);
-    document.getElementById('recDatum').value = p.datum || '';
-    document.getElementById('recHuso').value = p.huso || '';
     fillVertices(p.vertices);
     document.getElementById('recReferenciaObras').value = p.referenciaObras || '';
     setChipSingle('recVisibilidad', p.visibilidad);
@@ -3432,13 +3570,11 @@
     document.getElementById('recModalidadOtra').value = p.modalidadOtra || '';
     onRecModalidadChange();
     setChipSingle('recResultado', p.resultado);
-    document.getElementById('recTotalElementos').value = p.totalElementos || '';
     onRecResultadoChange();
     initMatRecTable(p.materiales || []);
-    loadCroquisFromDataUrl(p.croquisImagen || null);
+    recalcTotalElementos();
+    loadCroquisFromDataUrl(p.croquisImagen || null, p.croquisHallazgos || []);
     document.getElementById('recObservaciones').value = p.observaciones || '';
-    document.getElementById('recFirmaJefe').value = p.firmaJefeUnidad || '';
-    document.getElementById('recFirmaArqueologo').value = p.firmaArqueologo || '';
   }
 
   function resetRecForm(){
@@ -3449,6 +3585,7 @@
   function initRecForm(){
     pintarDatosProyectoFijos();
     initMatRecTable([]);
+    recalcTotalElementos();
     initCroquis();
     document.getElementById('recFecha').value = new Date().toISOString().slice(0, 10);
   }
@@ -3475,8 +3612,10 @@
         fotoDetalle: m.foto_detalle, descripcion: m.descripcion,
       })),
       croquisImagen: row.croquis_imagen,
+      croquisHallazgos: typeof row.croquis_hallazgos === 'string'
+        ? (JSON.parse(row.croquis_hallazgos || '[]') || [])
+        : (row.croquis_hallazgos || []),
       observaciones: row.observaciones,
-      firmaJefeUnidad: row.firma_jefe_unidad, firmaArqueologo: row.firma_arqueologo,
     };
   }
 
@@ -3855,6 +3994,20 @@
     niveles: 'dbTableNiveles', materiales: 'dbTableMateriales',
     recoleccion: 'dbTableRecoleccion', materialesRecoleccion: 'dbTableMaterialesRecoleccion',
   };
+  const DB_GROUPS = {
+    excavacion: ['niveles', 'materiales'],
+    recoleccion: ['recoleccion', 'materialesRecoleccion'],
+  };
+  let dbActiveGroup = 'excavacion';
+
+  function showDbGroup(group){
+    dbActiveGroup = group;
+    document.getElementById('dbGroupExcavacion').classList.toggle('active', group === 'excavacion');
+    document.getElementById('dbGroupRecoleccion').classList.toggle('active', group === 'recoleccion');
+    document.getElementById('dbSubtabsExcavacion').style.display = group === 'excavacion' ? 'flex' : 'none';
+    document.getElementById('dbSubtabsRecoleccion').style.display = group === 'recoleccion' ? 'flex' : 'none';
+    showDbTable(DB_GROUPS[group][0]);
+  }
 
   function showDbTable(name){
     dbActiveTable = name;
