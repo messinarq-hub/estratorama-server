@@ -1620,14 +1620,7 @@
           </div>
         </div>
 
-        <div class="grid2" style="margin-top:14px;">
-          <div class="field">
-            <label>Hora inicio / término</label>
-            <div style="display:flex; gap:8px;">
-              <input type="time" id="recHoraInicio">
-              <input type="time" id="recHoraTermino">
-            </div>
-          </div>
+        <div style="margin-top:14px;">
           <div class="field">
             <label for="recJefeUnidad">Jefe/a de unidad</label>
             <input type="text" id="recJefeUnidad" oninput="clearError('recJefeUnidad')">
@@ -3521,8 +3514,6 @@
       fecha: document.getElementById('recFecha').value || null,
       dimLargo: document.getElementById('recDimLargo').value || null,
       dimAncho: document.getElementById('recDimAncho').value || null,
-      horaInicio: document.getElementById('recHoraInicio').value || null,
-      horaTermino: document.getElementById('recHoraTermino').value || null,
       jefeUnidad: document.getElementById('recJefeUnidad').value.trim(),
       tituloJefe: getChipSingleValue('recTituloJefe') || null,
       equipoApoyo: document.getElementById('recEquipoApoyo').value.trim() || null,
@@ -3583,8 +3574,6 @@
     document.getElementById('recFecha').value = p.fecha || '';
     setSelectNumeric('recDimLargo', p.dimLargo);
     setSelectNumeric('recDimAncho', p.dimAncho);
-    document.getElementById('recHoraInicio').value = p.horaInicio || '';
-    document.getElementById('recHoraTermino').value = p.horaTermino || '';
     document.getElementById('recJefeUnidad').value = p.jefeUnidad || '';
     setChipSingle('recTituloJefe', p.tituloJefe);
     document.getElementById('recEquipoApoyo').value = p.equipoApoyo || '';
@@ -3636,7 +3625,6 @@
       proyecto: row.proyecto, sitio: row.sitio, permisoCmn: row.permiso_cmn, arqueologoTitular: row.arqueologo_titular,
       codigoUnidad: row.codigo_unidad, fecha: row.fecha ? String(row.fecha).slice(0, 10) : '',
       dimLargo: row.dim_largo_m, dimAncho: row.dim_ancho_m,
-      horaInicio: row.hora_inicio, horaTermino: row.hora_termino,
       jefeUnidad: row.jefe_unidad, tituloJefe: row.titulo_jefe, equipoApoyo: row.equipo_apoyo,
       areaDensidad: row.area_densidad, datum: row.datum, huso: row.huso,
       vertices: row.vertices || {}, referenciaObras: row.referencia_obras,
