@@ -37,12 +37,23 @@ function toCsv(rows, columns) {
 const NIVELES_COLS = [
   ['id', 'ID'],
   ['unidad', 'Unidad'], ['estrato', 'Estrato'], ['nivel', 'Nivel'],
-  ['profundidad_inicio_cm', 'Prof_Inicio'], ['profundidad_fin_cm', 'Prof_Fin'],
+  ['profundidad_inicio_cm', 'Prof_Inicio'], ['profundidad_fin_cm', 'Prof_Fin'], ['prof_otro', 'Prof_Otro'],
+  ['control_estratigrafico', 'Control_Estratigrafico'],
   ['consistencia', 'Consistencia'], ['granulo_dominante', 'Granulo_Dominante'],
   ['granulo_secundario', 'Granulo_Secundario'], ['granulo_terciario', 'Granulo_Terciario'],
-  ['forma_clastos', 'Forma_Clastos'], ['color_principal', 'Color'], ['inclusiones', 'Otros_Elementos'],
-  ['hay_materiales', 'Hay_Materiales'], ['estado_nivel', 'Estado'],
+  ['forma_clastos', 'Forma_Clastos'], ['color_principal', 'Color'], ['color_secundario', 'Color_Secundario'],
+  ['inclusiones', 'Otros_Elementos'], ['otros_desc', 'Otros_Elementos_Desc'],
+  ['observaciones', 'Observaciones'],
+  ['id_rasgo', 'ID_Rasgo'], ['tipo_rasgo', 'Tipo_Rasgo'], ['descripcion_rasgo', 'Descripcion_Rasgo'],
+  ['hay_materiales', 'Hay_Materiales'],
+  ['foto_perfil', 'Foto_Perfil'], ['foto_planta', 'Foto_Planta'],
+  ['estado_nivel', 'Estado'], ['perfil_dibujado', 'Perfil_Dibujado'], ['observaciones_perfil', 'Observaciones_Perfil'],
   ['responsable', 'Responsable'], ['creado_en', 'Creado_En'],
+];
+
+const UNIDADES_COLS = [
+  ['unidad', 'Unidad'], ['proyecto', 'Proyecto'], ['sitio', 'Sitio'], ['sector', 'Sector'],
+  ['dimensiones_m2', 'Dimensiones_m2'], ['creado_en', 'Creado_En'],
 ];
 
 const MATERIALES_COLS = [
@@ -56,6 +67,12 @@ router.get('/niveles.csv', checkToken, async (req, res) => {
   const result = await pool.query('SELECT * FROM niveles ORDER BY unidad, nivel');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.send(toCsv(result.rows, NIVELES_COLS));
+});
+
+router.get('/unidades.csv', checkToken, async (req, res) => {
+  const result = await pool.query('SELECT * FROM unidades ORDER BY unidad');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.send(toCsv(result.rows, UNIDADES_COLS));
 });
 
 router.get('/materiales.csv', checkToken, async (req, res) => {
