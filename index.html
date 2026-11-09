@@ -2276,12 +2276,13 @@
     const unidades = Array.from({length:10}, (_, i) => `R${i + 1}`);
     populateSelect('unidad', unidades, 'R1');
 
-    // Estrato: A–Z, con subdivisiones A1, B1, C1, D1
+    // Estrato: A–Z, con subdivisiones A1, B1, C1, D1, y A2
     const letras = [];
     for(let i = 0; i < 26; i++){
       const letra = String.fromCharCode(65 + i);
       letras.push(letra);
       if('ABCD'.includes(letra)) letras.push(letra + '1');
+      if(letra === 'A') letras.push('A2');
     }
     populateSelect('estrato', letras, 'A');
 
@@ -3420,8 +3421,8 @@
     updateCroquisHint();
     redrawCroquis();
   }
-  function drawCroquisGridAndNorth(ctx, w, h){
-    const isLight = document.documentElement.classList.contains('light-mode');
+  function drawCroquisGridAndNorth(ctx, w, h, forceLight){
+    const isLight = forceLight !== undefined ? forceLight : document.documentElement.classList.contains('light-mode');
     ctx.fillStyle = isLight ? '#FFFFFF' : '#050505';
     ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = 'rgba(122,122,122,0.35)';
@@ -3508,10 +3509,47 @@
       }
     });
   }
+  // Arma una versión "para guardar" del croquis con SIEMPRE fondo blanco,
+  // sin depender del tema oscuro/claro activo en pantalla al dibujar.
+  // La leyenda de hallazgos NO se dibuja acá — se agrega aparte solo al
+  // descargar el JPG (ver descargarCroquisJpg), para no duplicarla.
+  function buildCroquisExportCanvas(loadedImage, actions){
+    const srcCanvas = document.getElementById('recCroquisCanvas');
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if(loadedImage){
+      ctx.drawImage(loadedImage, 0, 0, w, h);
+    } else {
+      drawCroquisGridAndNorth(ctx, w, h, true); // true = forzar estilo claro
+    }
+    ctx.strokeStyle = '#1A1A1A';
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    (actions || []).forEach(a => {
+      if(a.type === 'stroke'){
+        ctx.beginPath();
+        a.points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+      } else if(a.type === 'marker'){
+        ctx.beginPath();
+        ctx.fillStyle = '#FF8C17';
+        ctx.arc(a.x, a.y, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#050505';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(a.num, a.x, a.y + 1);
+      }
+    });
+    return canvas;
+  }
   function getCroquisDataUrl(){
     if(!croquisLoadedImage && croquisActions.length === 0) return null;
-    const canvas = document.getElementById('recCroquisCanvas');
-    return canvas.toDataURL('image/png');
+    return buildCroquisExportCanvas(croquisLoadedImage, croquisActions).toDataURL('image/png');
   }
   function loadCroquisFromDataUrl(dataUrl, hallazgosPrefill){
     croquisActions = [];
@@ -4016,16 +4054,38 @@
     return `<button type="button" class="btn-mini" onclick="descargarCroquisDeFila(${idx})">⬇ JPG</button>`;
   }
 
-  function descargarCroquisJpg(pngDataUrl, filename){
+  function descargarCroquisJpg(pngDataUrl, hallazgos, filename){
     const img = new Image();
     img.onload = function(){
+      let lista = hallazgos;
+      if(typeof lista === 'string'){
+        try{ lista = JSON.parse(lista || '[]'); } catch(e){ lista = []; }
+      }
+      if(!Array.isArray(lista)) lista = [];
+      const w = img.width, h = img.height;
+      const legendPad = 14, legendLineH = 20, legendTitleH = lista.length ? 26 : 0;
+      const legendH = lista.length ? legendTitleH + lista.length * legendLineH + legendPad : 0;
       const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = w;
+      canvas.height = h + legendH;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#ffffff'; // el JPG no soporta transparencia
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      // Nota: si el croquis se guardó ANTES de este cambio, puede traer su
+      // propio fondo oscuro ya "horneado" en el PNG — eso no se puede corregir
+      // acá. Los croquis guardados desde ahora en adelante salen con fondo blanco.
+      if(lista.length){
+        ctx.fillStyle = '#1A1A1A';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('Hallazgos:', legendPad, h + 20);
+        ctx.font = '12px sans-serif';
+        lista.forEach((hz, i) => {
+          const y = h + legendTitleH + (i + 1) * legendLineH - 4;
+          ctx.fillText(`${hz.num}: ${hz.materialidad || '(sin material)'}`, legendPad, y);
+        });
+      }
       const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.92);
       const a = document.createElement('a');
       a.href = jpgDataUrl;
@@ -4041,7 +4101,7 @@
     const row = dbRecoleccionRaw[idx];
     if(!row || !row.croquis_imagen) return;
     const nombre = 'croquis_' + (row.codigo_unidad || 'unidad') + '.jpg';
-    descargarCroquisJpg(row.croquis_imagen, nombre);
+    descargarCroquisJpg(row.croquis_imagen, row.croquis_hallazgos, nombre);
   }
 
   const RECOLECCION_COLS = [
