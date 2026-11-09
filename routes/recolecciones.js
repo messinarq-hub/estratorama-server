@@ -115,16 +115,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /recolecciones/:id — edita una ficha existente (solo quien la creó puede editarla)
+// PUT /recolecciones/:id — edita una ficha existente (y reemplaza su lista de materiales)
 router.put('/:id', async (req, res) => {
   const b = req.body;
   const { id } = req.params;
-
-  const owner = await pool.query('SELECT responsable FROM recolecciones WHERE id = $1', [id]);
-  if (owner.rowCount === 0) return res.status(404).json({ error: 'Ficha de recolección no encontrada.' });
-  if (owner.rows[0].responsable !== req.user.username) {
-    return res.status(403).json({ error: 'Solo quien creó esta ficha puede editarla.' });
-  }
 
   const client = await pool.connect();
   try {
@@ -191,13 +185,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /recolecciones/:id (solo quien la creó puede eliminarla)
+// DELETE /recolecciones/:id
 router.delete('/:id', async (req, res) => {
-  const owner = await pool.query('SELECT responsable FROM recolecciones WHERE id = $1', [req.params.id]);
-  if (owner.rowCount === 0) return res.status(404).json({ error: 'Ficha de recolección no encontrada.' });
-  if (owner.rows[0].responsable !== req.user.username) {
-    return res.status(403).json({ error: 'Solo quien creó esta ficha puede eliminarla.' });
-  }
   const result = await pool.query('DELETE FROM recolecciones WHERE id = $1 RETURNING id', [req.params.id]);
   if (result.rowCount === 0) return res.status(404).json({ error: 'Ficha de recolección no encontrada.' });
   res.json({ ok: true });

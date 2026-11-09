@@ -30,8 +30,23 @@ function toCsv(rows, columns) {
     return s;
   };
   const header = columns.map(([, label]) => esc(label)).join(',');
-  const lines = rows.map((r) => columns.map(([key]) => esc(r[key])).join(','));
+  // `key` normalmente es el nombre de la columna en la fila, pero tambi\u00E9n
+  // puede ser una funci\u00F3n (fila) => valor, para columnas calculadas.
+  const lines = rows.map((r) => columns.map(([key]) =>
+    esc(typeof key === 'function' ? key(r) : r[key])
+  ).join(','));
   return '\uFEFF' + [header, ...lines].join('\n');
+}
+
+// El croquis trae un listado de hallazgos numerados: [{num, materialidad}].
+// Postgres devuelve la columna JSONB ya parseada como arreglo/objeto JS.
+function croquisHallazgosToText(row) {
+  let arr = row.croquis_hallazgos;
+  if (typeof arr === 'string') { try { arr = JSON.parse(arr); } catch (e) { arr = []; } }
+  if (!Array.isArray(arr) || arr.length === 0) return '';
+  return arr
+    .map((h) => `${h.num}: ${h.materialidad || '(sin material)'}`)
+    .join(' | ');
 }
 
 const NIVELES_COLS = [
@@ -93,6 +108,7 @@ const RECOLECCIONES_COLS = [
   ['disturbacion_antropico', 'Disturbacion_Antropico'], ['disturbacion_natural', 'Disturbacion_Natural'],
   ['superficie_revisada', 'Superficie_Revisada'], ['modalidad', 'Modalidad'],
   ['resultado', 'Resultado'], ['total_elementos', 'Total_Elementos'],
+  [croquisHallazgosToText, 'Hallazgos_Croquis'],
   ['observaciones', 'Observaciones'],
   ['firma_jefe_unidad', 'Firma_Jefe_Unidad'], ['firma_arqueologo', 'Firma_Arqueologo'],
   ['responsable', 'Responsable'], ['creado_en', 'Creado_En'],
