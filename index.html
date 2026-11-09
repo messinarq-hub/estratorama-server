@@ -1580,10 +1580,20 @@
       <div class="card-body">
         <div class="grid3">
           <div class="field">
-            <label for="recCodigoUnidad">Código unidad</label>
-            <input type="text" id="recCodigoUnidad" placeholder="ej. recoleccion_1" list="codigosRecoleccionConocidos"
-              oninput="this.value=this.value.toLowerCase().replace(/ /g,'_'); clearError('recCodigoUnidad');" onblur="normalizeRecField('recCodigoUnidad')">
-            <datalist id="codigosRecoleccionConocidos"></datalist>
+            <label for="recCodigoUnidad">Código unidad (cuadrante)</label>
+            <select id="recCodigoUnidad" onchange="onRecCodigoUnidadChange()">
+              <option value="">Selecciona cuadrante…</option>
+              <option value="G1">G1</option>
+              <option value="G2">G2</option>
+              <option value="G3">G3</option>
+              <option value="G4">G4</option>
+              <option value="G5">G5</option>
+              <option value="G6">G6</option>
+              <option value="G7">G7</option>
+              <option value="G8">G8</option>
+              <option value="G9">G9</option>
+              <option value="G10">G10</option>
+            </select>
             <p class="field-error" id="err-recCodigoUnidad"></p>
           </div>
           <div class="field">
@@ -1636,11 +1646,7 @@
           </div>
         </div>
 
-        <div class="grid2" style="margin-top:14px;">
-          <div class="field">
-            <label for="recEquipoApoyo">Equipo de apoyo</label>
-            <input type="text" id="recEquipoApoyo" placeholder="nombres separados por coma">
-          </div>
+        <div style="margin-top:14px;">
           <div class="field">
             <label>Área de densidad</label>
             <div class="chip-group rec-chip-single" id="recAreaDensidad">
@@ -2257,8 +2263,13 @@
     const unidades = Array.from({length:10}, (_, i) => `R${i + 1}`);
     populateSelect('unidad', unidades, 'R1');
 
-    // Estrato: A–Z
-    const letras = Array.from({length:26}, (_, i) => String.fromCharCode(65 + i));
+    // Estrato: A–Z, con subdivisiones A1, B1, C1, D1
+    const letras = [];
+    for(let i = 0; i < 26; i++){
+      const letra = String.fromCharCode(65 + i);
+      letras.push(letra);
+      if('ABCD'.includes(letra)) letras.push(letra + '1');
+    }
     populateSelect('estrato', letras, 'A');
 
     // Nivel: 1–100
@@ -3254,6 +3265,28 @@
     });
   }
 
+  // Coordenadas UTM (WGS84, huso 18S) predeterminadas de los 10 cuadrantes
+  // de la ficha de recolección, según PUNTOS_VERTICES_CUADRANTES.csv.
+  const REC_CUADRANTES_PREDETERMINADOS = {
+    G1:  { NO:{este:'633149.96',norte:'5371323.50'}, NE:{este:'633154.94',norte:'5371323.05'}, SE:{este:'633154.50',norte:'5371318.07'}, SO:{este:'633149.52',norte:'5371318.52'} },
+    G2:  { NO:{este:'633150.41',norte:'5371328.48'}, NE:{este:'633155.39',norte:'5371328.03'}, SE:{este:'633154.94',norte:'5371323.05'}, SO:{este:'633149.96',norte:'5371323.50'} },
+    G3:  { NO:{este:'633150.85',norte:'5371333.46'}, NE:{este:'633155.83',norte:'5371333.01'}, SE:{este:'633155.39',norte:'5371328.03'}, SO:{este:'633150.41',norte:'5371328.48'} },
+    G4:  { NO:{este:'633151.30',norte:'5371338.44'}, NE:{este:'633156.28',norte:'5371337.99'}, SE:{este:'633155.83',norte:'5371333.01'}, SO:{este:'633150.85',norte:'5371333.46'} },
+    G5:  { NO:{este:'633151.74',norte:'5371343.42'}, NE:{este:'633156.72',norte:'5371342.97'}, SE:{este:'633156.28',norte:'5371337.99'}, SO:{este:'633151.30',norte:'5371338.44'} },
+    G6:  { NO:{este:'633154.94',norte:'5371323.05'}, NE:{este:'633159.92',norte:'5371322.61'}, SE:{este:'633159.48',norte:'5371317.63'}, SO:{este:'633154.50',norte:'5371318.07'} },
+    G7:  { NO:{este:'633155.39',norte:'5371328.03'}, NE:{este:'633160.37',norte:'5371327.59'}, SE:{este:'633159.92',norte:'5371322.61'}, SO:{este:'633154.94',norte:'5371323.05'} },
+    G8:  { NO:{este:'633155.83',norte:'5371333.01'}, NE:{este:'633160.81',norte:'5371332.57'}, SE:{este:'633160.37',norte:'5371327.59'}, SO:{este:'633155.39',norte:'5371328.03'} },
+    G9:  { NO:{este:'633156.28',norte:'5371337.99'}, NE:{este:'633161.26',norte:'5371337.55'}, SE:{este:'633160.81',norte:'5371332.57'}, SO:{este:'633155.83',norte:'5371333.01'} },
+    G10: { NO:{este:'633156.72',norte:'5371342.97'}, NE:{este:'633161.70',norte:'5371342.53'}, SE:{este:'633161.26',norte:'5371337.55'}, SO:{este:'633156.28',norte:'5371337.99'} },
+  };
+
+  function onRecCodigoUnidadChange(){
+    clearError('recCodigoUnidad');
+    const cod = document.getElementById('recCodigoUnidad').value;
+    const datos = REC_CUADRANTES_PREDETERMINADOS[cod];
+    if(datos) fillVertices(datos);
+  }
+
   // ---------- Croquis de planta (canvas) ----------
   let croquisTool = 'pen';
   let croquisActions = [];
@@ -3525,7 +3558,6 @@
       dimAncho: document.getElementById('recDimAncho').value || null,
       jefeUnidad: document.getElementById('recJefeUnidad').value.trim(),
       tituloJefe: getChipSingleValue('recTituloJefe') || null,
-      equipoApoyo: document.getElementById('recEquipoApoyo').value.trim() || null,
       areaDensidad: getChipSingleValue('recAreaDensidad') || null,
       datum: REC_DATUM_FIJO,
       huso: REC_HUSO_FIJO,
@@ -3585,7 +3617,6 @@
     setSelectNumeric('recDimAncho', p.dimAncho);
     document.getElementById('recJefeUnidad').value = p.jefeUnidad || '';
     setChipSingle('recTituloJefe', p.tituloJefe);
-    document.getElementById('recEquipoApoyo').value = p.equipoApoyo || '';
     setChipSingle('recAreaDensidad', p.areaDensidad);
     fillVertices(p.vertices);
     document.getElementById('recReferenciaObras').value = p.referenciaObras || '';
@@ -3634,7 +3665,7 @@
       proyecto: row.proyecto, sitio: row.sitio, permisoCmn: row.permiso_cmn, arqueologoTitular: row.arqueologo_titular,
       codigoUnidad: row.codigo_unidad, fecha: row.fecha ? String(row.fecha).slice(0, 10) : '',
       dimLargo: row.dim_largo_m, dimAncho: row.dim_ancho_m,
-      jefeUnidad: row.jefe_unidad, tituloJefe: row.titulo_jefe, equipoApoyo: row.equipo_apoyo,
+      jefeUnidad: row.jefe_unidad, tituloJefe: row.titulo_jefe,
       areaDensidad: row.area_densidad, datum: row.datum, huso: row.huso,
       vertices: row.vertices || {}, referenciaObras: row.referencia_obras,
       visibilidad: row.visibilidad, coberturaVegetal: row.cobertura_vegetal, coberturaVegetalOtra: row.cobertura_vegetal_otra,
@@ -3752,9 +3783,9 @@
   }
 
   function populateCodigosRecoleccionDatalist(){
-    const list = document.getElementById('codigosRecoleccionConocidos');
-    const codigos = [...new Set(savedRecolecciones.map(r => r.codigo_unidad))];
-    list.innerHTML = codigos.map(c => `<option value="${c}">`).join('');
+    // El código de unidad ahora es un <select> fijo (cuadrantes G1–G10),
+    // ya no hay datalist que poblar — se deja la función (no-op) porque
+    // se sigue llamando desde refreshRecFichasFromServer().
   }
 
   function getMergedRecFichas(){
