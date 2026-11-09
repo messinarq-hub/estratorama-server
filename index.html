@@ -444,6 +444,19 @@
   }
   .btn.primary:hover{box-shadow:1px 1px 0 var(--line-soft); transform:translate(2px,2px);}
   .btn:hover{background:var(--line-soft); box-shadow:1px 1px 0 var(--line-soft); transform:translate(2px,2px);}
+  .btn-mini{
+    font-family:var(--sans);
+    font-size:12px;
+    font-weight:600;
+    padding:5px 10px;
+    border-radius:6px;
+    border:1px solid var(--accent);
+    background:var(--panel);
+    color:var(--accent);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-mini:hover{background:var(--line-soft);}
 
   /* json preview */
   .preview-toggle{
@@ -3985,12 +3998,60 @@
     ['tipo_material','Tipo'], ['frecuencia','Frecuencia'], ['descripcion','Descripción'],
     ['responsable','Responsable'], ['creado_en','Creado'],
   ];
+  function hallazgosToText(value){
+    let hallazgos = value;
+    if(typeof hallazgos === 'string'){
+      try{ hallazgos = JSON.parse(hallazgos || '[]'); } catch(e){ hallazgos = []; }
+    }
+    if(!Array.isArray(hallazgos) || hallazgos.length === 0) return '';
+    return hallazgos.map(h => `${h.num}: ${h.materialidad || '—'}`).join(' · ');
+  }
+  function renderHallazgosCell(value){
+    const texto = hallazgosToText(value);
+    return texto ? texto : '<span class="hint">—</span>';
+  }
+
+  function renderCroquisCell(value, row, idx){
+    if(!row.croquis_imagen) return '<span class="hint">Sin croquis</span>';
+    return `<button type="button" class="btn-mini" onclick="descargarCroquisDeFila(${idx})">⬇ JPG</button>`;
+  }
+
+  function descargarCroquisJpg(pngDataUrl, filename){
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; // el JPG no soporta transparencia
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const a = document.createElement('a');
+      a.href = jpgDataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    };
+    img.src = pngDataUrl;
+  }
+
+  function descargarCroquisDeFila(idx){
+    const row = dbRecoleccionRaw[idx];
+    if(!row || !row.croquis_imagen) return;
+    const nombre = 'croquis_' + (row.codigo_unidad || 'unidad') + '.jpg';
+    descargarCroquisJpg(row.croquis_imagen, nombre);
+  }
+
   const RECOLECCION_COLS = [
     ['codigo_unidad','Código unidad'], ['proyecto','Proyecto'], ['sitio','Sitio'], ['fecha','Fecha'],
     ['jefe_unidad','Jefe/a unidad'], ['area_densidad','Área densidad'], ['datum','Datum'], ['huso','Huso'],
     ['visibilidad','Visibilidad'], ['cobertura_vegetal','Cobertura vegetal'],
     ['superficie_revisada','Superficie revisada'], ['modalidad','Modalidad'],
     ['resultado','Resultado'], ['total_elementos','N° elementos'],
+    ['croquis_hallazgos','Hallazgos croquis', renderHallazgosCell, hallazgosToText],
+    ['croquis_imagen','Croquis', renderCroquisCell, false],
     ['responsable','Responsable'], ['creado_en','Creado'],
   ];
   const MATERIALES_RECOLECCION_COLS = [
@@ -4030,8 +4091,8 @@
     container.querySelector('table').style.display = 'table';
 
     thead.innerHTML = '<tr>' + cols.map(([, label]) => `<th>${label}</th>`).join('') + '</tr>';
-    tbody.innerHTML = rows.map(row =>
-      '<tr>' + cols.map(([key]) => `<td>${fmtCell(row[key])}</td>`).join('') + '</tr>'
+    tbody.innerHTML = rows.map((row, idx) =>
+      '<tr>' + cols.map(([key, , render]) => `<td>${render ? render(row[key], row, idx) : fmtCell(row[key])}</td>`).join('') + '</tr>'
     ).join('');
   }
 
@@ -4104,8 +4165,15 @@
     const cols = colsByTable[dbActiveTable];
     if(rows.length === 0){ showToast('No hay datos para exportar.'); return; }
 
-    const header = cols.map(([, label]) => csvEscape(label)).join(',');
-    const lines = rows.map(row => cols.map(([key]) => csvEscape(row[key])).join(','));
+    // La 4\u00AA posici\u00F3n de cada columna es opcional: una funci\u00F3n para formatear
+    // el valor en el CSV como texto plano (ej. hallazgos), o `false` para
+    // excluir esa columna del CSV (ej. la imagen del croquis, que no cabe
+    // como texto \u2014 para eso est\u00E1 el bot\u00F3n "Descargar JPG" en la tabla).
+    const exportCols = cols.filter(c => c[3] !== false);
+    const header = exportCols.map(([, label]) => csvEscape(label)).join(',');
+    const lines = rows.map(row => exportCols.map(([key, , , csvFmt]) =>
+      csvEscape(csvFmt ? csvFmt(row[key], row) : row[key])
+    ).join(','));
     const csv = '\uFEFF' + [header, ...lines].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
