@@ -2329,9 +2329,11 @@
     row.className = 'material-row';
     row.id = id;
     const tipos = ['Líticos','Cerámica indígena','Cerámica colonial','Osteofauna','Loza','Vidrio','Metal','Carbón','Muestras','Otros'];
-    const tipoSel = prefill ? prefill.tipo : '';
-    const freqVal = prefill ? prefill.frecuencia : 0;
-    const descVal = prefill ? prefill.descripcion : '';
+    const tipoSel = (prefill && prefill.tipo) || '';
+    const freqVal = (prefill && prefill.frecuencia != null) ? prefill.frecuencia : 0;
+    // prefill.descripcion puede venir null desde la base de datos (campo opcional
+    // que se guardó vacío) — sin el "|| ''" eso rompía la edición de la ficha.
+    const descVal = (prefill && prefill.descripcion) || '';
     row.innerHTML = `
       <div class="field">
         <label>Tipo de material</label>
