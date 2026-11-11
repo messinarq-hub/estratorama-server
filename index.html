@@ -2877,6 +2877,22 @@
     };
   }
 
+  // Postgres devuelve los arrays de un tipo "enum" personalizado (como
+  // inclusiones, perfil_dibujado, disturbacion_antropico/natural) como el
+  // texto literal "{a,b}" en vez de un array real de JS — si no se convierte,
+  // cosas como s.inclusiones.some(...) truenan ("is not a function") y la
+  // edición de una ficha ya guardada se corta a mitad de camino.
+  function pgArrayToJs(v){
+    if(Array.isArray(v)) return v;
+    if(v === null || v === undefined) return [];
+    if(typeof v === 'string' && /^\{.*\}$/.test(v)){
+      const inner = v.slice(1, -1);
+      if(inner === '') return [];
+      return inner.split(',').map(s => s.replace(/^"(.*)"$/, '$1'));
+    }
+    return [];
+  }
+
   function serverRowToEntry(row){
     const info = unidadesInfo[row.unidad] || {};
     const snapshot = {
@@ -2897,7 +2913,7 @@
       formaClastos: row.forma_clastos,
       colorPrincipal: row.color_principal,
       colorSecundario: row.color_secundario,
-      inclusiones: row.inclusiones || [],
+      inclusiones: pgArrayToJs(row.inclusiones),
       otrosDesc: row.otros_desc,
       obsEstrat: row.observaciones,
       idRasgo: row.id_rasgo,
@@ -2910,7 +2926,7 @@
       fotoPerfil: row.foto_perfil,
       fotoPlanta: row.foto_planta,
       estadoNivel: row.estado_nivel,
-      perfilDibujado: row.perfil_dibujado || [],
+      perfilDibujado: pgArrayToJs(row.perfil_dibujado),
       obsPerfil: row.observaciones_perfil,
     };
     return {
@@ -3721,8 +3737,8 @@
       vertices: row.vertices || {}, referenciaObras: row.referencia_obras,
       visibilidad: row.visibilidad, coberturaVegetal: row.cobertura_vegetal, coberturaVegetalOtra: row.cobertura_vegetal_otra,
       sinDisturbacion: row.sin_disturbacion,
-      disturbacionAntropico: row.disturbacion_antropico || [], disturbacionAntropicoOtro: row.disturbacion_antropico_otro,
-      disturbacionNatural: row.disturbacion_natural || [], disturbacionNaturalOtro: row.disturbacion_natural_otro,
+      disturbacionAntropico: pgArrayToJs(row.disturbacion_antropico), disturbacionAntropicoOtro: row.disturbacion_antropico_otro,
+      disturbacionNatural: pgArrayToJs(row.disturbacion_natural), disturbacionNaturalOtro: row.disturbacion_natural_otro,
       superficieRevisada: row.superficie_revisada, superficieRevisadaOtra: row.superficie_revisada_otra,
       modalidad: row.modalidad, modalidadOtra: row.modalidad_otra,
       resultado: row.resultado, totalElementos: row.total_elementos,
