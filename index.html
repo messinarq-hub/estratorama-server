@@ -3083,6 +3083,16 @@
     const n = document.getElementById('nivel');
     n.value = Number(n.value) + 1;
     document.getElementById('stampNivel').textContent = 'N.' + n.value;
+
+    // Los materiales son específicos de CADA nivel — si se dejan tal cual,
+    // el Nivel siguiente queda con los mismos materiales del nivel anterior
+    // "pegados" sin que nadie los haya vuelto a registrar de verdad, y al
+    // guardar se duplican datos de materiales que no corresponden a ese nivel.
+    document.getElementById('materialRows').innerHTML = '';
+    materialCount = 0;
+    document.getElementById('hayMateriales').classList.remove('on');
+    document.getElementById('materialesList').style.display = 'none';
+    refreshPreview();
   }
 
   let editingIsQueued = false;
