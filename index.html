@@ -2488,10 +2488,15 @@
       tipoRasgo: document.getElementById('tipoRasgo').value,
       descRasgo: document.getElementById('descRasgo').value,
       hayMateriales: document.getElementById('hayMateriales').classList.contains('on'),
-      materiales: Array.from(document.querySelectorAll('.material-row')).map(row => {
-        const [sel, freq, desc] = row.querySelectorAll('select, input');
-        return { tipo: sel.value, frecuencia: Number(freq.value), descripcion: desc.value };
-      }),
+      // Si el interruptor está apagado, NO se guardan los materiales aunque
+      // hayan quedado filas sin borrar en el formulario — si no, una ficha
+      // marcada "Hay materiales: No" podía terminar guardando materiales igual.
+      materiales: document.getElementById('hayMateriales').classList.contains('on')
+        ? Array.from(document.querySelectorAll('.material-row')).map(row => {
+            const [sel, freq, desc] = row.querySelectorAll('select, input');
+            return { tipo: sel.value, frecuencia: Number(freq.value), descripcion: desc.value };
+          })
+        : [],
       fotoPerfil: document.getElementById('fotoPerfil').classList.contains('on'),
       fotoPlanta: document.getElementById('fotoPlanta').classList.contains('on'),
       estadoNivel: document.getElementById('estadoNivel').value,
