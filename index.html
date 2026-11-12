@@ -3091,14 +3091,51 @@
     n.value = Number(n.value) + 1;
     document.getElementById('stampNivel').textContent = 'N.' + n.value;
 
-    // Los materiales son específicos de CADA nivel — si se dejan tal cual,
-    // el Nivel siguiente queda con los mismos materiales del nivel anterior
-    // "pegados" sin que nadie los haya vuelto a registrar de verdad, y al
-    // guardar se duplican datos de materiales que no corresponden a ese nivel.
+    // Todos los campos descriptivos de UN nivel (estrato, color, consistencia,
+    // granulometría, inclusiones, materiales, rasgo, estado, etc.) son específicos
+    // de ESE nivel — si se dejan tal cual al avanzar, el nivel siguiente queda con
+    // los mismos datos del nivel anterior sin que nadie los haya vuelto a registrar
+    // de verdad. Solo se conserva lo que describe la UNIDAD completa, no el nivel:
+    // proyecto, unidad, sitio, dimensiones, control estratigráfico y responsable.
+
+    document.getElementById('estrato').value = 'A';
+    document.getElementById('profundidad').value = '0-10';
+    document.getElementById('profOtro').value = '';
+    document.getElementById('consistencia').value = '';
+    document.getElementById('granuloDom').value = '';
+    document.getElementById('granuloSec').value = '';
+    document.getElementById('granuloTerc').value = '';
+    document.getElementById('formaClastos').value = '';
+    document.getElementById('colorPrincipal').value = '';
+    document.getElementById('colorSecundario').value = '';
+
+    document.querySelectorAll('#inclusiones .chip').forEach(c => c.classList.remove('on'));
+    document.getElementById('otrosDesc').value = '';
+    onOtrosToggle();
+
+    document.getElementById('obsEstrat').value = '';
+    document.getElementById('idRasgo').value = 'Rasgo 1';
+    document.getElementById('tipoRasgo').value = '';
+    document.getElementById('descRasgo').value = '';
+
     document.getElementById('materialRows').innerHTML = '';
     materialCount = 0;
     document.getElementById('hayMateriales').classList.remove('on');
     document.getElementById('materialesList').style.display = 'none';
+
+    document.getElementById('fotoPerfil').classList.remove('on');
+    document.getElementById('fotoPlanta').classList.remove('on');
+    document.getElementById('estadoNivel').value = 'Continuación';
+    document.getElementById('cierreCard').style.display = 'none';
+    document.querySelectorAll('#perfilDibujado .chip').forEach(c => c.classList.remove('on'));
+    document.getElementById('obsPerfil').value = '';
+
+    clearError('consistencia');
+    clearError('granuloDom');
+    clearError('colorPrincipal');
+    clearError('obsEstrat');
+    clearError('otrosDesc');
+
     refreshPreview();
   }
 
