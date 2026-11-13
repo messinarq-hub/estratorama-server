@@ -2313,8 +2313,8 @@
     const niveles = Array.from({length:100}, (_, i) => i + 1);
     populateSelect('nivel', niveles, 1);
 
-    // Profundidad: rangos de 10 cm, 0 a 200
-    const rangos = Array.from({length:20}, (_, i) => {
+    // Profundidad: rangos de 10 cm, 0 a 250
+    const rangos = Array.from({length:25}, (_, i) => {
       const start = i * 10, end = start + 10;
       return { value: `${start}-${end}`, label: `${start}–${end} cm` };
     });
