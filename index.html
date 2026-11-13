@@ -906,6 +906,16 @@
     color:var(--paper);
     background:var(--accent);
   }
+  .db-badge{
+    display:inline-block;
+    margin-left:4px;
+    padding:1px 7px;
+    border-radius:10px;
+    background:#d33;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+  }
   .db-actions{
     margin-left:auto;
     display:flex;
@@ -1882,6 +1892,7 @@
       <div class="db-subtabs-row" id="dbSubtabsExcavacion">
         <button class="db-subtab active" id="subtabNiveles" onclick="showDbTable('niveles')">Niveles</button>
         <button class="db-subtab" id="subtabMateriales" onclick="showDbTable('materiales')">Materiales</button>
+        <button class="db-subtab" id="subtabDuplicados" onclick="showDbTable('duplicados')">⚠ Duplicados <span id="duplicadosBadge" class="db-badge" style="display:none;">0</span></button>
         <div class="db-actions">
           <button class="btn" onclick="loadDbView()">↻ Actualizar</button>
           <button class="btn primary" id="btnExportCsv" onclick="exportCurrentTableCsv()">⬇ Exportar CSV</button>
@@ -1901,6 +1912,10 @@
       <table class="db-table"><thead></thead><tbody></tbody></table>
     </div>
     <div id="dbTableMateriales" class="db-table-scroll" style="display:none;">
+      <table class="db-table"><thead></thead><tbody></tbody></table>
+    </div>
+    <div id="dbTableDuplicados" class="db-table-scroll" style="display:none;">
+      <p class="hint" style="margin:4px 0 12px;">Se revisan automáticamente: materiales idénticos pegados entre niveles consecutivos (el bug de "arrastre" ya corregido, pero puede haber fichas viejas sin limpiar), y profundidades repetidas o con tramos saltados dentro de una misma unidad.</p>
       <table class="db-table"><thead></thead><tbody></tbody></table>
     </div>
     <div id="dbTableRecoleccion" class="db-table-scroll" style="display:none;">
@@ -2079,6 +2094,14 @@
 
   function getCurrentUsername(){
     try{ return localStorage.getItem('estratorama_user_v1') || ''; } catch(e){ return ''; }
+  }
+
+  // Compara nombres de "responsable" ignorando mayúsculas/minúsculas y espacios
+  // de más al inicio/final — una ficha guardada con "Rodrigo_Alvar " (con
+  // mayúscula o espacio de sobra) antes no se podía editar porque el nombre de
+  // usuario actual no calzaba EXACTO, letra por letra, con lo guardado.
+  function mismoResponsable(a, b){
+    return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
   }
 
   function getKnownUsersLocal(){
@@ -2955,7 +2978,7 @@
       ]);
       unidadesInfo = {};
       unidades.forEach(u => { unidadesInfo[u.unidad] = u; });
-      const propios = niveles.filter(n => n.responsable === getCurrentUsername());
+      const propios = niveles.filter(n => mismoResponsable(n.responsable, getCurrentUsername()));
       savedFichas = propios.map(serverRowToEntry);
       setCachedUnidades(unidades);
       setCachedNiveles(niveles);
@@ -2970,7 +2993,7 @@
         const niveles = getCachedNiveles();
         unidadesInfo = {};
         unidades.forEach(u => { unidadesInfo[u.unidad] = u; });
-        const propios = niveles.filter(n => n.responsable === getCurrentUsername());
+        const propios = niveles.filter(n => mismoResponsable(n.responsable, getCurrentUsername()));
         savedFichas = propios.map(serverRowToEntry);
         renderFichasPanel();
         const sitios = [...new Set(unidades.map(u => u.sitio).filter(Boolean))];
@@ -3910,7 +3933,7 @@
   }
 
   function getMergedRecFichas(){
-    const reales = savedRecolecciones.filter(r => r.responsable === getCurrentUsername()).map(r => ({
+    const reales = savedRecolecciones.filter(r => mismoResponsable(r.responsable, getCurrentUsername())).map(r => ({
       localId: r.id, codigoUnidad: r.codigo_unidad, fecha: r.fecha, resultado: r.resultado,
       row: r, pending: false, conflict: false,
     }));
@@ -4087,6 +4110,7 @@
 
   let dbNivelesRaw = [];
   let dbMaterialesRaw = [];
+  let dbDuplicadosRaw = [];
   let dbRecoleccionRaw = [];
   let dbMaterialesRecoleccionRaw = [];
   let dbActiveTable = 'niveles';
@@ -4106,6 +4130,103 @@
     ['tipo_material','Tipo'], ['frecuencia','Frecuencia'], ['descripcion','Descripción'],
     ['responsable','Responsable'], ['creado_en','Creado'],
   ];
+  const DUPLICADOS_COLS = [
+    ['tipo','Tipo de problema'], ['unidad','Unidad'], ['niveles','Nivel(es)'],
+    ['detalle','Detalle'], ['responsable','Responsable'],
+  ];
+
+  // Revisa niveles + materiales ya cargados (de TODOS los usuarios, no solo
+  // los propios) y arma una lista de posibles duplicados/errores, para que
+  // un administrador pueda detectarlos sin tener que exportar y revisar un
+  // CSV a mano cada vez.
+  function detectarDuplicados(niveles, materiales){
+    const out = [];
+
+    // 1) Materiales con texto IDÉNTICO (tipo+frecuencia+descripción) pegados
+    //    en niveles consecutivos de la misma unidad — señal del bug de
+    //    "arrastre" entre niveles (ya corregido en la app, pero puede haber
+    //    fichas viejas, de antes del arreglo, sin limpiar todavía).
+    const porUnidad = {};
+    materiales.forEach(m => {
+      const u = m.unidad || '—';
+      if(!porUnidad[u]) porUnidad[u] = [];
+      porUnidad[u].push(m);
+    });
+    Object.keys(porUnidad).forEach(u => {
+      const lista = porUnidad[u].slice().sort((a, b) => Number(a.nivel) - Number(b.nivel));
+      for(let i = 1; i < lista.length; i++){
+        const prev = lista[i - 1], cur = lista[i];
+        const mismoTexto = (prev.tipo_material || '') === (cur.tipo_material || '')
+          && Number(prev.frecuencia) === Number(cur.frecuencia)
+          && (prev.descripcion || '').trim() === (cur.descripcion || '').trim()
+          && (prev.descripcion || '').trim() !== '';
+        const nivelesConsecutivos = Number(cur.nivel) === Number(prev.nivel) + 1;
+        if(mismoTexto && nivelesConsecutivos){
+          out.push({
+            tipo: 'Material repetido entre niveles',
+            unidad: u, niveles: `${prev.nivel} → ${cur.nivel}`,
+            detalle: `"${cur.tipo_material}: ${cur.descripcion}" aparece igual en ambos niveles — revisar si el del nivel ${cur.nivel} sobra.`,
+            responsable: cur.responsable,
+          });
+        }
+      }
+    });
+
+    // 2) Profundidades repetidas o con un tramo saltado dentro de la misma
+    //    unidad — normalmente un error de registro manual, no un bug de la app.
+    const nivelesPorUnidad = {};
+    niveles.forEach(n => {
+      const u = n.unidad || '—';
+      if(!nivelesPorUnidad[u]) nivelesPorUnidad[u] = [];
+      nivelesPorUnidad[u].push(n);
+    });
+    Object.keys(nivelesPorUnidad).forEach(u => {
+      const lista = nivelesPorUnidad[u].slice().sort((a, b) => Number(a.nivel) - Number(b.nivel));
+      const vistos = {};
+      lista.forEach(n => {
+        const rango = `${n.profundidad_inicio_cm}-${n.profundidad_fin_cm}`;
+        if(vistos[rango]){
+          out.push({
+            tipo: 'Profundidad repetida',
+            unidad: u, niveles: `${vistos[rango]} y ${n.nivel}`,
+            detalle: `Ambos niveles quedaron con el mismo rango (${n.profundidad_inicio_cm}–${n.profundidad_fin_cm} cm).`,
+            responsable: n.responsable,
+          });
+        }
+        vistos[rango] = n.nivel;
+      });
+      for(let i = 1; i < lista.length; i++){
+        const prevFin = Number(lista[i - 1].profundidad_fin_cm);
+        const curInicio = Number(lista[i].profundidad_inicio_cm);
+        if(!Number.isNaN(prevFin) && !Number.isNaN(curInicio) && curInicio > prevFin){
+          out.push({
+            tipo: 'Tramo de profundidad saltado',
+            unidad: u, niveles: `${lista[i - 1].nivel} → ${lista[i].nivel}`,
+            detalle: `Falta el tramo ${prevFin}–${curInicio} cm entre estos dos niveles.`,
+            responsable: lista[i].responsable,
+          });
+        }
+      }
+    });
+
+    // 3) Unidad+Nivel real duplicado (no debería pasar por la restricción de
+    //    la base de datos, pero se revisa igual por si alguien forzó guardar).
+    const clavesVistas = {};
+    niveles.forEach(n => {
+      const clave = `${n.unidad}__${n.nivel}`;
+      if(clavesVistas[clave]){
+        out.push({
+          tipo: 'Unidad + Nivel duplicado',
+          unidad: n.unidad, niveles: String(n.nivel),
+          detalle: 'Hay dos fichas guardadas para el mismo nivel de esta unidad.',
+          responsable: n.responsable,
+        });
+      }
+      clavesVistas[clave] = true;
+    });
+
+    return out;
+  }
   function hallazgosToText(value){
     let hallazgos = value;
     if(typeof hallazgos === 'string'){
@@ -4236,8 +4357,17 @@
       dbMaterialesRaw = niveles.flatMap(n => n.materiales || []);
       dbRecoleccionRaw = recolecciones;
       dbMaterialesRecoleccionRaw = recolecciones.flatMap(r => r.materiales || []);
+      dbDuplicadosRaw = detectarDuplicados(dbNivelesRaw, dbMaterialesRaw);
+      const badge = document.getElementById('duplicadosBadge');
+      if(dbDuplicadosRaw.length > 0){
+        badge.textContent = dbDuplicadosRaw.length;
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
       renderDbTable('dbTableNiveles', dbNivelesRaw, NIVELES_COLS);
       renderDbTable('dbTableMateriales', dbMaterialesRaw, MATERIALES_COLS);
+      renderDbTable('dbTableDuplicados', dbDuplicadosRaw, DUPLICADOS_COLS);
       renderDbTable('dbTableRecoleccion', dbRecoleccionRaw, RECOLECCION_COLS);
       renderDbTable('dbTableMaterialesRecoleccion', dbMaterialesRecoleccionRaw, MATERIALES_RECOLECCION_COLS);
     } catch(err){
@@ -4245,17 +4375,17 @@
     }
   }
 
-  const DB_TABLES = ['niveles', 'materiales', 'recoleccion', 'materialesRecoleccion'];
+  const DB_TABLES = ['niveles', 'materiales', 'duplicados', 'recoleccion', 'materialesRecoleccion'];
   const DB_SUBTAB_IDS = {
-    niveles: 'subtabNiveles', materiales: 'subtabMateriales',
+    niveles: 'subtabNiveles', materiales: 'subtabMateriales', duplicados: 'subtabDuplicados',
     recoleccion: 'subtabRecoleccion', materialesRecoleccion: 'subtabMaterialesRecoleccion',
   };
   const DB_TABLE_IDS = {
-    niveles: 'dbTableNiveles', materiales: 'dbTableMateriales',
+    niveles: 'dbTableNiveles', materiales: 'dbTableMateriales', duplicados: 'dbTableDuplicados',
     recoleccion: 'dbTableRecoleccion', materialesRecoleccion: 'dbTableMaterialesRecoleccion',
   };
   const DB_GROUPS = {
-    excavacion: ['niveles', 'materiales'],
+    excavacion: ['niveles', 'materiales', 'duplicados'],
     recoleccion: ['recoleccion', 'materialesRecoleccion'],
   };
   let dbActiveGroup = 'excavacion';
@@ -4284,11 +4414,11 @@
 
   function exportCurrentTableCsv(){
     const rowsByTable = {
-      niveles: dbNivelesRaw, materiales: dbMaterialesRaw,
+      niveles: dbNivelesRaw, materiales: dbMaterialesRaw, duplicados: dbDuplicadosRaw,
       recoleccion: dbRecoleccionRaw, materialesRecoleccion: dbMaterialesRecoleccionRaw,
     };
     const colsByTable = {
-      niveles: NIVELES_COLS, materiales: MATERIALES_COLS,
+      niveles: NIVELES_COLS, materiales: MATERIALES_COLS, duplicados: DUPLICADOS_COLS,
       recoleccion: RECOLECCION_COLS, materialesRecoleccion: MATERIALES_RECOLECCION_COLS,
     };
     const rows = rowsByTable[dbActiveTable];
