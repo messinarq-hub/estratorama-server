@@ -112,6 +112,9 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /niveles/:id — edita un nivel existente (solo quien lo creó puede editarlo)
+// También reemplaza la lista de materiales cuando el body trae `materiales`
+// (antes este endpoint solo actualizaba la tabla `niveles` y los cambios en
+// cantidades/materiales nunca se guardaban).
 router.put('/:id', async (req, res) => {
   const b = req.body;
   const { id } = req.params;
@@ -122,27 +125,64 @@ router.put('/:id', async (req, res) => {
     return res.status(403).json({ error: 'Solo quien creó este nivel puede editarlo.' });
   }
 
-  const result = await pool.query(
-    `UPDATE niveles SET
-      estrato=$1, profundidad_inicio_cm=$2, profundidad_fin_cm=$3, prof_otro=$4,
-      control_estratigrafico=$5, consistencia=$6, granulo_dominante=$7, granulo_secundario=$8, granulo_terciario=$9, forma_clastos=$10,
-      color_principal=$11, color_secundario=$12, inclusiones=$13, otros_desc=$14, observaciones=$15,
-      id_rasgo=$16, tipo_rasgo=$17, descripcion_rasgo=$18, hay_materiales=$19,
-      foto_perfil=$20, foto_planta=$21, estado_nivel=$22, perfil_dibujado=$23, observaciones_perfil=$24
-     WHERE id = $25
-     RETURNING *`,
-    [
-      b.estrato, b.profundidadInicio, b.profundidadFin, b.profOtro || null,
-      !!b.controlEstratigrafico, b.consistencia, b.granuloDominante, b.granuloSecundario || null, b.granuloTerciario || null, b.formaClastos || null,
-      b.colorPrincipal, b.colorSecundario || null, b.inclusiones || [], b.otrosDesc || null, b.observaciones,
-      b.idRasgo || null, b.tipoRasgo || null, b.descripcionRasgo || null, !!b.hayMateriales,
-      !!b.fotoPerfil, !!b.fotoPlanta, b.estadoNivel, b.perfilDibujado || [], b.observacionesPerfil || null,
-      id,
-    ]
-  );
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
 
-  if (result.rowCount === 0) return res.status(404).json({ error: 'Nivel no encontrado.' });
-  res.json(result.rows[0]);
+    const result = await client.query(
+      `UPDATE niveles SET
+        estrato=$1, profundidad_inicio_cm=$2, profundidad_fin_cm=$3, prof_otro=$4,
+        control_estratigrafico=$5, consistencia=$6, granulo_dominante=$7, granulo_secundario=$8, granulo_terciario=$9, forma_clastos=$10,
+        color_principal=$11, color_secundario=$12, inclusiones=$13, otros_desc=$14, observaciones=$15,
+        id_rasgo=$16, tipo_rasgo=$17, descripcion_rasgo=$18, hay_materiales=$19,
+        foto_perfil=$20, foto_planta=$21, estado_nivel=$22, perfil_dibujado=$23, observaciones_perfil=$24
+       WHERE id = $25
+       RETURNING *`,
+      [
+        b.estrato, b.profundidadInicio, b.profundidadFin, b.profOtro || null,
+        !!b.controlEstratigrafico, b.consistencia, b.granuloDominante, b.granuloSecundario || null, b.granuloTerciario || null, b.formaClastos || null,
+        b.colorPrincipal, b.colorSecundario || null, b.inclusiones || [], b.otrosDesc || null, b.observaciones,
+        b.idRasgo || null, b.tipoRasgo || null, b.descripcionRasgo || null, !!b.hayMateriales,
+        !!b.fotoPerfil, !!b.fotoPlanta, b.estadoNivel, b.perfilDibujado || [], b.observacionesPerfil || null,
+        id,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Nivel no encontrado.' });
+    }
+    const nivel = result.rows[0];
+
+    // Si el body trae `materiales`, se reemplaza la lista completa (igual que
+    // en POST /niveles y en PUT /recolecciones/:id). Si no viene esa clave,
+    // se dejan los materiales existentes intactos.
+    let materialesGuardados;
+    if (b.materiales !== undefined) {
+      await client.query('DELETE FROM materiales WHERE id_registro = $1', [id]);
+      materialesGuardados = [];
+      for (const m of (b.materiales || [])) {
+        const matResult = await client.query(
+          `INSERT INTO materiales (id_registro, tipo_material, frecuencia, descripcion, unidad, nivel, estrato, responsable)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+          [id, m.tipo, m.frecuencia, m.descripcion || null, nivel.unidad, nivel.nivel, nivel.estrato, nivel.responsable]
+        );
+        materialesGuardados.push(matResult.rows[0]);
+      }
+    } else {
+      const existentes = await client.query('SELECT * FROM materiales WHERE id_registro = $1', [id]);
+      materialesGuardados = existentes.rows;
+    }
+
+    await client.query('COMMIT');
+    res.json({ ...nivel, materiales: materialesGuardados });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error(e);
+    res.status(500).json({ error: 'Error interno al editar el nivel.' });
+  } finally {
+    client.release();
+  }
 });
 
 // DELETE /niveles/:id (solo quien lo creó puede eliminarlo)
