@@ -1317,6 +1317,17 @@
             </div>
           </div>
         </div>
+        <div class="collapsible" style="margin-top:10px;">
+          <div class="collapsible-head" onclick="toggleCollapse('estratoSecundario')">
+            <span class="add-link" style="padding:0;">+ Nivel abarca 2 estratos (transición)</span>
+          </div>
+          <div class="collapsible-body" id="estratoSecundario-body">
+            <div class="field" style="margin-top:8px;">
+              <label for="estratoSecundario">Estrato secundario <span style="font-weight:400; color:var(--ink-soft);">(opcional)</span></label>
+              <select id="estratoSecundario" onchange="refreshPreview()"></select>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1951,7 +1962,7 @@
     <div class="card">
       <div class="card-head"><h2>1. Nivel actual</h2></div>
       <div class="card-body">
-        <p class="help-p"><strong>Estrato</strong>: letra del estrato (A, B, C...). Si el nivel abarca dos capas en transición, puedes usar un valor compuesto como escribirlo directamente si tu formulario lo permite (ej. "A-B").</p>
+        <p class="help-p"><strong>Estrato</strong>: letra del estrato (A, B, C...). Si el nivel abarca dos capas en transición, abre <strong>"+ Nivel abarca 2 estratos (transición)"</strong> y elige el estrato secundario — la ficha se guarda con el valor compuesto (ej. "A-B").</p>
         <p class="help-p"><strong>Nivel</strong>: número correlativo dentro de la unidad (1, 2, 3...). Se elige de una lista, no se autocalcula — revisa cuál es el siguiente nivel real en tu cuaderno de campo antes de guardar.</p>
         <p class="help-p"><strong>Profundidad</strong>: rango de 10 cm (0–10, 10–20...). Si tu medida real no calza con ese rango, usa el campo colapsable <strong>"+ Profundidad alternativa (Prof_Otro)"</strong> para anotarla tal cual.</p>
       </div>
@@ -2294,6 +2305,32 @@
     }).join('');
   }
 
+  // El Estrato se guarda como un único texto libre en el servidor (acepta
+  // "A", "A-B", etc. — ver schema.sql). La UI usa dos selects (principal +
+  // secundario opcional) y estas funciones combinan/separan el valor para
+  // que el resto de la app siga tratando "Estrato" como un solo string.
+  function composeEstrato(principal, secundario){
+    return (secundario && secundario !== principal) ? `${principal}-${secundario}` : principal;
+  }
+
+  function getEstratoValue(){
+    const principal = document.getElementById('estrato').value;
+    const secundario = document.getElementById('estratoSecundario').value;
+    return composeEstrato(principal, secundario);
+  }
+
+  function setEstratoValue(value){
+    const v = value || '';
+    const dash = v.indexOf('-');
+    const principal = dash > -1 ? v.slice(0, dash) : v;
+    const secundario = dash > -1 ? v.slice(dash + 1) : '';
+    document.getElementById('estrato').value = principal;
+    document.getElementById('estratoSecundario').value = secundario;
+    if(secundario){
+      document.getElementById('estratoSecundario-body').classList.add('open');
+    }
+  }
+
   function initSelects(){
     // Unidad: U1–U100
     const unidades = Array.from({length:10}, (_, i) => `R${i + 1}`);
@@ -2308,6 +2345,7 @@
       if(letra === 'A') letras.push('A2');
     }
     populateSelect('estrato', letras, 'A');
+    populateSelect('estratoSecundario', [{ value: '', label: '— sin especificar —' }, ...letras], '');
 
     // Nivel: 1–100
     const niveles = Array.from({length:100}, (_, i) => i + 1);
@@ -2407,7 +2445,7 @@
         Responsable: document.getElementById('responsable').value,
         Unidad: document.getElementById('unidad').value,
         Nivel: Number(document.getElementById('nivel').value),
-        Estrato: document.getElementById('estrato').value,
+        Estrato: getEstratoValue(),
       };
     });
 
@@ -2424,7 +2462,7 @@
       Unidad: document.getElementById('unidad').value,
       Sitio: document.getElementById('readSitio').value,
       DimensionesM2: Number(document.getElementById('dimensiones').value),
-      Estrato: document.getElementById('estrato').value,
+      Estrato: getEstratoValue(),
       Nivel: Number(document.getElementById('nivel').value),
       ProfundidadInicio: Number(profStart),
       ProfundidadFin: Number(profEnd),
@@ -2460,7 +2498,7 @@
     const items = [
       ['Unidad', document.getElementById('unidad').value],
       ['Nivel', document.getElementById('nivel').value],
-      ['Estrato', document.getElementById('estrato').value],
+      ['Estrato', getEstratoValue()],
       ['Responsable', document.getElementById('responsable').value],
       ['Fecha/Hora', 'automático'],
     ];
@@ -2495,7 +2533,7 @@
       dimensiones: document.getElementById('dimensiones').value,
       controlEstrat: document.getElementById('controlEstrat').classList.contains('on'),
       responsable: document.getElementById('responsable').value,
-      estrato: document.getElementById('estrato').value,
+      estrato: getEstratoValue(),
       nivel: document.getElementById('nivel').value,
       profundidad: document.getElementById('profundidad').value,
       profOtro: document.getElementById('profOtro').value,
@@ -2541,7 +2579,7 @@
     document.getElementById('dimensiones').value = s.dimensiones || 1;
     setSwitch('controlEstrat', s.controlEstrat);
     document.getElementById('responsable').value = s.responsable;
-    document.getElementById('estrato').value = s.estrato;
+    setEstratoValue(s.estrato);
     document.getElementById('nivel').value = s.nivel;
     document.getElementById('profundidad').value = s.profundidad;
     document.getElementById('profOtro').value = s.profOtro || '';
@@ -3122,6 +3160,8 @@
     // proyecto, unidad, sitio, dimensiones, control estratigráfico y responsable.
 
     document.getElementById('estrato').value = 'A';
+    document.getElementById('estratoSecundario').value = '';
+    document.getElementById('estratoSecundario-body').classList.remove('open');
     document.getElementById('profundidad').value = '0-10';
     document.getElementById('profOtro').value = '';
     document.getElementById('consistencia').value = '';
