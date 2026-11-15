@@ -4201,7 +4201,10 @@
           && (prev.descripcion || '').trim() === (cur.descripcion || '').trim()
           && (prev.descripcion || '').trim() !== '';
         const nivelesConsecutivos = Number(cur.nivel) === Number(prev.nivel) + 1;
-        if(mismoTexto && nivelesConsecutivos){
+        // La "Columna de flotación" se toma a propósito en cada nivel, así que
+        // repetirse idéntica entre niveles consecutivos es normal, no un error.
+        const esFlotacion = (cur.descripcion || '').toLowerCase().includes('flotaci');
+        if(mismoTexto && nivelesConsecutivos && !esFlotacion){
           out.push({
             tipo: 'Material repetido entre niveles',
             unidad: u, niveles: `${prev.nivel} → ${cur.nivel}`,
